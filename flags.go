@@ -1,7 +1,6 @@
 package flags
 
 import (
-	"flag"
 	"fmt"
 	"strings"
 )
@@ -18,14 +17,4 @@ func (c *Name) String() string {
 func (c *Name) Set(str string) error {
 	c.text = str
 	return nil
-}
-
-func main() {
-	c := new(Name)
-	c.Set("You ran without a name flag")
-	flag.Var(c, "name", "help message for name")
-	flag.Parse()
-
-	fmt.Println(c.text)
-	fmt.Println(c.String())
 }
