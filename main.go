@@ -29,18 +29,9 @@ func main() {
 	flag.Var(c, "name", "help message for name")
 	flag.Parse()
 
-	// fmt.Println(c.text)
-	// fmt.Println(c.String())
+	mkdir(c.text)
+	writefile(c.text)
 
-	// var wg sync.WaitGroup
-	// wg.Add(1)
-	// go func() {
-	// 	defer wg.Done()
-	// mkdir(c.text)
-	// writefile(c.text)
-	// }()
-
-	// wg.Wait()
 	cmd := exec.Command("go", "fmt", "./"+c.text+"/./...")
 
 	err := cmd.Run()
@@ -49,7 +40,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	os.Chdir("./my-module")
+	err = os.Chdir("./" + c.text)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	cmd = exec.Command("go", "mod", "init", "example/my-module")
 
