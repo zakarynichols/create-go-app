@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -22,10 +25,67 @@ func (c *Name) Set(str string) error {
 
 func main() {
 	c := new(Name)
-	c.Set("You ran without a name flag")
+	// c.Set("You ran without a name flag")
 	flag.Var(c, "name", "help message for name")
 	flag.Parse()
 
-	fmt.Println(c.text)
-	fmt.Println(c.String())
+	// fmt.Println(c.text)
+	// fmt.Println(c.String())
+
+	// var wg sync.WaitGroup
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// mkdir(c.text)
+	// writefile(c.text)
+	// }()
+
+	// wg.Wait()
+	cmd := exec.Command("go", "fmt", "./"+c.text+"/./...")
+
+	err := cmd.Run()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Chdir("./my-module")
+
+	cmd = exec.Command("go", "mod", "init", "example/my-module")
+
+	err = cmd.Run()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func mkdir(dirname string) {
+	err := os.Mkdir(dirname, 0750)
+	if err != nil && !os.IsExist(err) {
+		log.Fatal(err)
+	}
+}
+
+func writefile(dirname string) {
+	err := os.WriteFile(
+		dirname+"/main.go",
+		[]byte(`
+package main
+
+import (
+"fmt"
+"net/http"
+)
+
+func main() {
+fmt.Println("Create Go App")
+http.ListenAndServe(":1337", nil)
+}
+	`),
+		0660,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
