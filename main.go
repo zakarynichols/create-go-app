@@ -3,10 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/zakarynichols/create-go-app/colors"
 )
 
 type Name struct {
@@ -17,54 +18,93 @@ func (c *Name) String() string {
 	return fmt.Sprintf("String() - %s", strings.ToTitle(c.text))
 }
 
-// the string coming in is the input from cmd line
 func (c *Name) Set(str string) error {
 	c.text = str
 	return nil
 }
 
 func main() {
-	c := new(Name)
-	// c.Set("You ran without a name flag")
-	flag.Var(c, "name", "help message for name")
+	var err error
+
+	color := colors.New()
+
+	pkgName := new(Name)
+
+	flag.Var(pkgName, "name", "The name of the package")
+
 	flag.Parse()
 
-	mkdir(c.text)
-	writefile(c.text)
+	fmt.Printf("%sCreating a new Go app in %s'./%s'%s %s\n", color.Cyan, color.Green, pkgName.text, color.Cyan, color.Reset)
 
-	cmd := exec.Command("go", "fmt", "./"+c.text+"/./...")
+	fmt.Print("\n")
 
-	err := cmd.Run()
-
-	if err != nil {
-		log.Fatal(err)
+	fmt.Printf("%sChecking if %s'./%s'%s already exists...%s\n", color.Cyan, color.Green, pkgName.text, color.Cyan, color.Reset)
+	_, err = os.Open("./" + pkgName.text)
+	if err == nil {
+		fmt.Printf("\n")
+		fmt.Printf("%serror: directory "+"'./"+"%s"+"'"+" already exists%s\n", color.Red, pkgName.text, color.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
 	}
 
-	err = os.Chdir("./" + c.text)
+	fmt.Print("\n")
+
+	fmt.Printf("%sMaking new dir %s'./%s'%s\n", color.Cyan, color.Green, pkgName.text, color.Reset)
+	err = os.Mkdir(pkgName.text, 0750)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("\n")
+		fmt.Printf("%serror: failed to create directory\n%s", colors.Red, colors.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
 	}
 
-	cmd = exec.Command("go", "mod", "init", "example/my-module")
+	fmt.Print("\n")
 
+	fmt.Printf("Writing ./main.go file...\n")
+	err = os.WriteFile(pkgName.text+"/main.go", []byte(mainTemplate), 0660)
+	fmt.Print("\n")
+	if err != nil {
+		fmt.Printf("\n")
+		fmt.Printf("%serror: failed to write files\n%s", colors.Red, colors.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
+	}
+
+	fmt.Printf("Changing to dir ./%s\n", pkgName.text)
+	err = os.Chdir("./" + pkgName.text)
+	if err != nil {
+		fmt.Printf("\n")
+		fmt.Printf("%serror: failed to change directory\n%s", colors.Red, colors.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
+	}
+
+	fmt.Print("\n")
+
+	fmt.Printf("Executing go mod init...\n")
+	cmd := exec.Command("go", "mod", "init", "example/my-module") // don't hardcode module name. only for testing
 	err = cmd.Run()
-
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("\n")
+		fmt.Printf("%serror: failed to initialize a module\n%s", colors.Red, colors.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
+	}
+
+	fmt.Print("\n")
+
+	fmt.Printf("Executing go fmt...\n")
+	cmd = exec.Command("go", "fmt", "./...")
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("\n")
+		fmt.Printf("%serror: failed to format code\n%s", colors.Red, colors.Reset)
+		fmt.Print("\n")
+		os.Exit(1)
 	}
 }
 
-func mkdir(dirname string) {
-	err := os.Mkdir(dirname, 0750)
-	if err != nil && !os.IsExist(err) {
-		log.Fatal(err)
-	}
-}
-
-func writefile(dirname string) {
-	err := os.WriteFile(
-		dirname+"/main.go",
-		[]byte(`
+var mainTemplate = `
 package main
 
 import (
@@ -74,12 +114,6 @@ import (
 
 func main() {
 fmt.Println("Create Go App")
-http.ListenAndServe(":1337", nil)
+http.ListenAndServe(":0101", nil)
 }
-	`),
-		0660,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
+`
