@@ -42,7 +42,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = dir.CpdirAll("template", pkg.string())
+	err = dir.CpdirAll("./template", pkg.string())
 	if err != nil {
 		log.Fatal(err)
 	}
