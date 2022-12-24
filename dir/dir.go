@@ -18,7 +18,14 @@ func CpdirAll(src, dst string) error {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
-		if entry.IsDir() {
+		file, err := os.Stat(srcPath)
+		if err != nil {
+			return err
+		}
+
+		maskedMode := file.Mode() & os.ModeType
+
+		if maskedMode == os.ModeDir {
 			err := mkdir(dstPath, 0755)
 			if err != nil {
 				return err
