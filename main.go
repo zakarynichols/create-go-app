@@ -15,40 +15,6 @@ type pkg struct {
 	name string
 }
 
-func (pkg *pkg) string() string {
-	return pkg.name
-}
-
-func (pkg *pkg) set(str string) error {
-	pkg.name = str
-	return nil
-}
-
-// func main() {
-// 	start := time.Now()
-
-// 	flag.Parse()
-
-// 	if len(flag.Args()) != 1 {
-// 		log.Fatal("Only one cmd flag is permitted, the module name")
-// 	}
-
-// 	pkg := new(pkg)
-
-// 	pkg.set(flag.Args()[0])
-
-// 	err := os.Mkdir(pkg.string(), 0750)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-
-// 	since := time.Since(start)
-
-// 	fmt.Print("\n")
-
-// 	fmt.Printf("%sSucceeded in %f seconds\n", colors.Green, since.Seconds())
-// }
-
 func main() {
 	var err error
 
@@ -60,14 +26,15 @@ func main() {
 
 	flag.Parse()
 
-	if len(flag.Args()) != 1 {
+	flags := flag.Args()
+
+	if len(flags) != 1 {
 		fmt.Printf("%serror: only one non-named flag argument allowed.%s\n", colors.Red, colors.Reset)
 		os.Exit(1)
 	}
 
-	name := flag.Args()[0]
+	pkg.name = flags[0] // Will make this 'smarter' with help message and such.
 
-	err = pkg.set(name)
 	if err != nil {
 		log.Fatal(err)
 	}
