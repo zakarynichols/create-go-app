@@ -1,17 +1,43 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/zakarynichols/create-go-app/colors"
 	"github.com/zakarynichols/create-go-app/print"
 )
+
+/*
++-----+---+--------------------------+
+| rwx | 7 | Read, write and execute  |
+| rw- | 6 | Read, write              |
+| r-x | 5 | Read, and execute        |
+| r-- | 4 | Read,                    |
+| -wx | 3 | Write and execute        |
+| -w- | 2 | Write                    |
+| --x | 1 | Execute                  |
+| --- | 0 | no permissions           |
++------------------------------------+
+
++------------+------+-------+
+| Permission | Octal| Field |
++------------+------+-------+
+| rwx------  | 0700 | User  |
+| ---rwx---  | 0070 | Group |
+| ------rwx  | 0007 | Other |
++------------+------+-------+
+*/
+
+// Read, write, execute permission bitmask. See above for more info.
+const rwx = 0750
 
 var (
 	ErrNonNameFlag = errors.New(colors.Red + "create-go-app: only one non-named flag argument allowed" + colors.Reset)
@@ -62,7 +88,7 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("Checking if %s./%s%s already exists...%s\n", col.Green, pkgName, col.White, col.Reset)
+	fmt.Printf("Checking if %s./%s%s already exists...%s\n", col.Green, pkgName, col.White, col.Default)
 	_, err = os.Open("./" + pkgName)
 	if err == nil {
 		print.FatalError(ErrDirExists, 1)
@@ -70,8 +96,8 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sMaking new dir %s./%s%s\n", col.White, col.Green, pkgName, col.Reset)
-	err = os.Mkdir(pkgName, 0750)
+	fmt.Printf("%sMaking new dir %s./%s%s\n", col.White, col.Green, pkgName, col.Default)
+	err = os.Mkdir(pkgName, rwx)
 	if err != nil {
 		fmt.Printf("\n")
 		print.Colorf(col, ErrFailMkdir.Error(), "\n")
@@ -81,45 +107,56 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sWriting %smain.go%s file...%s\n", col.White, col.Cyan, col.White, col.Reset)
+	fmt.Printf("%sWriting %smain.go%s file...%s\n", col.White, col.Cyan, col.White, col.Default)
 	err = os.WriteFile(pkgName+"/main.go", []byte(mainTemplate), 0660)
 	fmt.Print("\n")
 	if err != nil {
 		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to write files\n%s", col.Red, col.Reset)
+		fmt.Printf("%serror: failed to write files\n%s", col.Red, col.Default)
 		fmt.Print("\n")
 		os.Exit(1)
 	}
 
-	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", col.White, col.Cyan, col.Green, pkgName, col.Reset)
+	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", col.White, col.Cyan, col.Green, pkgName, col.Default)
 	err = os.Chdir("./" + pkgName)
 	if err != nil {
 		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to change directory\n%s", col.Red, col.Reset)
+		fmt.Printf("%serror: failed to change directory\n%s", col.Red, col.Default)
 		fmt.Print("\n")
 		os.Exit(1)
 	}
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", col.White, col.Cyan, pkgName, col.Reset)
-	cmd := exec.Command("go", "mod", "init", pkgName) // don't hardcode module name. only for testing
+	fmt.Print("go mod init: ")
+	reader := bufio.NewReader(os.Stdin)
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal("failed to read string with err: ", err)
+	}
+
+	fmt.Print("\n")
+
+	input = strings.TrimSuffix(input, "\n")
+
+	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", col.White, col.Cyan, input, col.Default)
+	cmd := exec.Command("go", "mod", "init", input)
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to initialize a module\n%s", col.Red, col.Reset)
+		fmt.Printf("%serror: failed to initialize a module\n%s", col.Red, col.Default)
 		fmt.Print("\n")
 		os.Exit(1)
 	}
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", col.White, col.Cyan, col.Reset)
+	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", col.White, col.Cyan, col.Default)
 	cmd = exec.Command("go", "fmt", "./...")
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to format code\n%s", col.Red, col.Reset)
+		fmt.Printf("%serror: failed to format code\n%s", col.Red, col.Default)
 		fmt.Print("\n")
 		os.Exit(1)
 	}
@@ -128,7 +165,7 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sSucceeded in %f seconds\n%s", col.Green, elapsed.Seconds(), col.Reset)
+	fmt.Printf("%sSucceeded in %f seconds\n%s", col.Green, elapsed.Seconds(), col.Default)
 }
 
 // Put this in a 'code' package along with the other types of templates. cli, http server, module...
