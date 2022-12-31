@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -9,57 +10,71 @@ import (
 	"time"
 
 	"github.com/zakarynichols/create-go-app/colors"
+	"github.com/zakarynichols/create-go-app/print"
 )
 
-type pkg struct {
-	name string
-}
+var (
+	ErrNonNameFlag = errors.New(colors.Red + "create-go-app: only one non-named flag argument allowed" + colors.Reset)
+	ErrNameFlag    = errors.New(colors.Red + "create-go-app: only a single flag can be used to init a package. e.g. cli or http or module" + colors.Reset)
+	ErrDirExists   = errors.New(colors.Red + "create-go-app: directory already exists" + colors.Reset)
+	ErrFailMkdir   = errors.New(colors.Red + "create-go-app: failed to create directory" + colors.Reset)
+)
 
 func main() {
-	var err error
-
 	start := time.Now()
+
+	var err error
 
 	col := colors.New()
 
-	pkg := new(pkg)
+	cli := flag.Bool("cli", false, "set the cli")
+	http := flag.Bool("http", false, "set the http")
+	module := flag.Bool("module", false, "set the module")
 
 	flag.Parse()
 
 	flags := flag.Args()
-
 	if len(flags) != 1 {
-		fmt.Printf("%serror: only one non-named flag argument allowed.%s\n", col.Red, col.Reset)
-		os.Exit(1)
+		print.FatalError(ErrNonNameFlag, 1)
 	}
 
-	pkg.name = flags[0] // Will make this 'smarter' with help message and such.
+	namedFlags := []bool{*cli, *http, *module}
+	var flagsLen int // If a flag is provided, increment this variable.
+	for i := 0; i < len(namedFlags); i++ {
+		if namedFlags[i] {
+			flagsLen++
+		}
+	}
+
+	// Only one type of flag is allowed: cli, http, or module.
+	if flagsLen != 1 {
+		print.FatalError(ErrNameFlag, 1)
+	}
+
+	pkgName := flags[0] // Will make this 'smarter' with help message and such.
 
 	dir, err := os.Getwd()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%sCreating a new %sGo%s app in %s%s/%s%s %s\n", col.White, col.Cyan, col.White, col.Green, dir, pkg.name, col.Cyan, col.Reset)
+	fmt.Printf("Creating a new %sGo%s app in %s%s/%s%s\n%s", col.Cyan, col.Default, col.Green, dir, pkgName, col.Cyan, col.Default)
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sChecking if %s./%s%s already exists...%s\n", col.White, col.Green, pkg.name, col.White, col.Reset)
-	_, err = os.Open("./" + pkg.name)
+	fmt.Printf("Checking if %s./%s%s already exists...%s\n", col.Green, pkgName, col.White, col.Reset)
+	_, err = os.Open("./" + pkgName)
 	if err == nil {
-		fmt.Printf("\n")
-		fmt.Printf("%serror: directory "+"'./"+"%s"+"'"+" already exists%s\n", col.Red, pkg.name, col.Reset)
-		fmt.Print("\n")
-		os.Exit(1)
+		print.FatalError(ErrDirExists, 1)
 	}
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sMaking new dir %s./%s%s\n", col.White, col.Green, pkg.name, col.Reset)
-	err = os.Mkdir(pkg.name, 0750)
+	fmt.Printf("%sMaking new dir %s./%s%s\n", col.White, col.Green, pkgName, col.Reset)
+	err = os.Mkdir(pkgName, 0750)
 	if err != nil {
 		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to create directory\n%s", col.Red, col.Reset)
+		print.Colorf(col, ErrFailMkdir.Error(), "\n")
 		fmt.Print("\n")
 		os.Exit(1)
 	}
@@ -67,7 +82,7 @@ func main() {
 	fmt.Print("\n")
 
 	fmt.Printf("%sWriting %smain.go%s file...%s\n", col.White, col.Cyan, col.White, col.Reset)
-	err = os.WriteFile(pkg.name+"/main.go", []byte(mainTemplate), 0660)
+	err = os.WriteFile(pkgName+"/main.go", []byte(mainTemplate), 0660)
 	fmt.Print("\n")
 	if err != nil {
 		fmt.Printf("\n")
@@ -76,8 +91,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", col.White, col.Cyan, col.Green, pkg.name, col.Reset)
-	err = os.Chdir("./" + pkg.name)
+	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", col.White, col.Cyan, col.Green, pkgName, col.Reset)
+	err = os.Chdir("./" + pkgName)
 	if err != nil {
 		fmt.Printf("\n")
 		fmt.Printf("%serror: failed to change directory\n%s", col.Red, col.Reset)
@@ -87,8 +102,8 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", col.White, col.Cyan, pkg.name, col.Reset)
-	cmd := exec.Command("go", "mod", "init", pkg.name) // don't hardcode module name. only for testing
+	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", col.White, col.Cyan, pkgName, col.Reset)
+	cmd := exec.Command("go", "mod", "init", pkgName) // don't hardcode module name. only for testing
 	err = cmd.Run()
 	if err != nil {
 		fmt.Printf("\n")
@@ -113,9 +128,10 @@ func main() {
 
 	fmt.Print("\n")
 
-	fmt.Printf("%sSucceeded in %f seconds\n", col.Green, elapsed.Seconds())
+	fmt.Printf("%sSucceeded in %f seconds\n%s", col.Green, elapsed.Seconds(), col.Reset)
 }
 
+// Put this in a 'code' package along with the other types of templates. cli, http server, module...
 var mainTemplate = `
 package main
 
