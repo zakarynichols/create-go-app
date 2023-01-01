@@ -11,123 +11,105 @@ import (
 	"strings"
 	"time"
 
+	"github.com/zakarynichols/create-go-app/code"
 	"github.com/zakarynichols/create-go-app/colors"
+	"github.com/zakarynichols/create-go-app/perm"
 	"github.com/zakarynichols/create-go-app/print"
 )
 
-/*
-+-----+---+--------------------------+
-| rwx | 7 | Read, write and execute  |
-| rw- | 6 | Read, write              |
-| r-x | 5 | Read, and execute        |
-| r-- | 4 | Read,                    |
-| -wx | 3 | Write and execute        |
-| -w- | 2 | Write                    |
-| --x | 1 | Execute                  |
-| --- | 0 | no permissions           |
-+------------------------------------+
-
-+------------+------+-------+
-| Permission | Octal| Field |
-+------------+------+-------+
-| rwx------  | 0700 | User  |
-| ---rwx---  | 0070 | Group |
-| ------rwx  | 0007 | Other |
-+------------+------+-------+
-*/
-
-// Read, write, execute permission bitmask. See above for more info.
-const rwx = 0750
-
+// Errors exposed to the user. Stack traces and more detailed
+// errors for debugging will be written to a log file.
 var (
-	ErrNonNameFlag = errors.New(colors.Red + "create-go-app: only one non-named flag argument allowed" + colors.Reset)
-	ErrNameFlag    = errors.New(colors.Red + "create-go-app: only a single flag can be used to init a package. e.g. cli or http or module" + colors.Reset)
-	ErrDirExists   = errors.New(colors.Red + "create-go-app: directory already exists" + colors.Reset)
-	ErrFailMkdir   = errors.New(colors.Red + "create-go-app: failed to create directory" + colors.Reset)
+	ErrNonNameFlag = errors.New("create-go-app: only one non-named flag argument allowed")
+	ErrNameFlag    = errors.New("create-go-app: only a single named flag can be used to init a package. e.g. --cli, --http, or --module")
+	ErrDirExists   = errors.New("create-go-app: directory already exists")
+	ErrMkdir       = errors.New("create-go-app: failed to create directory")
+	ErrChdir       = errors.New("create-go-app: failed to change directory")
+	ErrWkdir       = errors.New("create-go-app: failed to get working directory")
+	ErrInitMod     = errors.New("create-go-app: failed to init a module")
+	ErrFmt         = errors.New("create-go-app: failed to format code")
+	ErrWriteFiles  = errors.New("create-go-app: failed to write files")
 )
 
+// application is the structure describing the initialized application.
+// It should have a directory name and a module name.
+type application struct {
+	dirname string
+	module  string
+}
+
+type elapse struct {
+	start time.Time
+	since func(start time.Time) time.Duration
+}
+
+func recordTime() elapse {
+	return elapse{
+		start: time.Now(),
+		since: func(start time.Time) time.Duration {
+			return time.Since(start)
+		},
+	}
+}
+
 func main() {
-	start := time.Now()
+	app := new(application)
 
-	var err error
+	elapse := recordTime()
 
-	col := colors.New()
+	namedFlagPtrs := setupFlags()
 
-	cli := flag.Bool("cli", false, "set the cli")
-	http := flag.Bool("http", false, "set the http")
-	module := flag.Bool("module", false, "set the module")
+	flag.Usage = usage
 
 	flag.Parse()
 
-	flags := flag.Args()
-	if len(flags) != 1 {
-		print.FatalError(ErrNonNameFlag, 1)
-	}
+	nonNamedFlags := flag.Args()
+	checkNonNamed(nonNamedFlags)
+	app.dirname = nonNamedFlags[0]
 
-	namedFlags := []bool{*cli, *http, *module}
-	var flagsLen int // If a flag is provided, increment this variable.
-	for i := 0; i < len(namedFlags); i++ {
-		if namedFlags[i] {
-			flagsLen++
-		}
-	}
+	checkNamed(namedFlagPtrs)
 
-	// Only one type of flag is allowed: cli, http, or module.
-	if flagsLen != 1 {
-		print.FatalError(ErrNameFlag, 1)
-	}
+	printWkdir(app.dirname)
 
-	pkgName := flags[0] // Will make this 'smarter' with help message and such.
+	fmt.Print("\n")
 
-	dir, err := os.Getwd()
+	checkExists(app.dirname)
+
+	fmt.Print("\n")
+
+	mkdir(app.dirname)
+
+	fmt.Print("\n")
+
+	writeFiles(app.dirname)
+
+	chdir(app.dirname)
+
+	fmt.Print("\n")
+
+	app.modInit()
+
+	fmt.Print("\n")
+
+	fmtCode()
+
+	elapsed := elapse.since(elapse.start)
+
+	fmt.Print("\n")
+
+	fmt.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
+}
+
+func fmtCode() {
+	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	cmd := exec.Command("go", "fmt", "./...")
+	err := cmd.Run()
 	if err != nil {
-		log.Fatal(err)
+		fatal(ErrFmt)
 	}
+}
 
-	fmt.Printf("Creating a new %sGo%s app in %s%s/%s%s\n%s", col.Cyan, col.Default, col.Green, dir, pkgName, col.Cyan, col.Default)
-
-	fmt.Print("\n")
-
-	fmt.Printf("Checking if %s./%s%s already exists...%s\n", col.Green, pkgName, col.White, col.Default)
-	_, err = os.Open("./" + pkgName)
-	if err == nil {
-		print.FatalError(ErrDirExists, 1)
-	}
-
-	fmt.Print("\n")
-
-	fmt.Printf("%sMaking new dir %s./%s%s\n", col.White, col.Green, pkgName, col.Default)
-	err = os.Mkdir(pkgName, rwx)
-	if err != nil {
-		fmt.Printf("\n")
-		print.Colorf(col, ErrFailMkdir.Error(), "\n")
-		fmt.Print("\n")
-		os.Exit(1)
-	}
-
-	fmt.Print("\n")
-
-	fmt.Printf("%sWriting %smain.go%s file...%s\n", col.White, col.Cyan, col.White, col.Default)
-	err = os.WriteFile(pkgName+"/main.go", []byte(mainTemplate), 0660)
-	fmt.Print("\n")
-	if err != nil {
-		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to write files\n%s", col.Red, col.Default)
-		fmt.Print("\n")
-		os.Exit(1)
-	}
-
-	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", col.White, col.Cyan, col.Green, pkgName, col.Default)
-	err = os.Chdir("./" + pkgName)
-	if err != nil {
-		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to change directory\n%s", col.Red, col.Default)
-		fmt.Print("\n")
-		os.Exit(1)
-	}
-
-	fmt.Print("\n")
-
+func (app *application) modInit() {
 	fmt.Print("go mod init: ")
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
@@ -137,64 +119,104 @@ func main() {
 
 	fmt.Print("\n")
 
-	input = strings.TrimSuffix(input, "\n")
+	app.module = strings.TrimSuffix(input, "\n")
 
-	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", col.White, col.Cyan, input, col.Default)
-	cmd := exec.Command("go", "mod", "init", input)
+	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", colors.White, colors.Cyan, app.module, colors.Default)
+	cmd := exec.Command("go", "mod", "init", app.module)
 	err = cmd.Run()
 	if err != nil {
-		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to initialize a module\n%s", col.Red, col.Default)
-		fmt.Print("\n")
-		os.Exit(1)
+		// Currently inside package directory. Move up a directory before handling errors.
+		err = os.Chdir("../")
+		if err != nil {
+			fatal(ErrChdir)
+		}
+		fatal(ErrInitMod)
 	}
+}
 
-	fmt.Print("\n")
+// fatal is the main error handling mechanism. It prints an error message, writes a debug log, and exits with a status code 1.
+func fatal(err error) {
+	print.Errorln(err)
+	print.WriteDebugLog(err)
+	os.Exit(1)
+}
 
-	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", col.White, col.Cyan, col.Default)
-	cmd = exec.Command("go", "fmt", "./...")
-	err = cmd.Run()
+// usage overrides the default `flag.Usage`.
+func usage() {
+	fmt.Printf("  To create an app with name 'my-app' run:\n")
+	fmt.Printf("\n")
+	fmt.Printf("  go run create-go-app.com --http my-app\n")
+	fmt.Printf("\n")
+	fmt.Printf("  There is only one non-named flag allowed for the name. e.g. 'my-app'\n")
+	fmt.Printf("\n")
+	flag.PrintDefaults()
+}
+
+func chdir(dirname string) {
+	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", colors.White, colors.Cyan, colors.Green, dirname, colors.Default)
+	err := os.Chdir("./" + dirname)
 	if err != nil {
-		fmt.Printf("\n")
-		fmt.Printf("%serror: failed to format code\n%s", col.Red, col.Default)
-		fmt.Print("\n")
-		os.Exit(1)
+		fatal(ErrChdir)
 	}
+}
 
-	elapsed := time.Since(start)
-
+func writeFiles(dirname string) {
+	fmt.Printf("%sWriting %smain.go%s file...%s\n", colors.White, colors.Cyan, colors.White, colors.Default)
+	err := os.WriteFile(dirname+"/main.go", []byte(code.HTTP), perm.RW)
 	fmt.Print("\n")
-
-	fmt.Printf("%sSucceeded in %f seconds\n%s", col.Green, elapsed.Seconds(), col.Default)
+	if err != nil {
+		fatal(ErrWriteFiles)
+	}
 }
 
-// Put this in a 'code' package along with the other types of templates. cli, http server, module...
-var mainTemplate = `
-package main
-
-import (
-	"fmt"
-	"io"
-	"log"
-	"net/http"
-)
-
-const Port = 9999
-
-func main() {
-	foo := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, fmt.Sprintf("path: %s\n", r.URL.Path))
+func mkdir(dirname string) {
+	fmt.Printf("%sMaking new dir %s./%s%s\n", colors.White, colors.Green, dirname, colors.Default)
+	err := os.Mkdir(dirname, perm.RWX)
+	if err != nil {
+		fatal(ErrMkdir)
 	}
-
-	bar := func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, fmt.Sprintf("path: %s\n", r.URL.Path))
-	}
-
-	fmt.Printf("Listening on port %d\n", Port)
-
-	http.HandleFunc("/foo", foo)
-	http.HandleFunc("/bar", bar)
-
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", Port), nil))
 }
-`
+
+func checkExists(dirname string) {
+	fmt.Printf("Checking if %s./%s%s already exists...%s\n", colors.Green, dirname, colors.White, colors.Default)
+	_, err := os.Open("./" + dirname)
+	if err == nil {
+		fatal(ErrDirExists)
+	}
+}
+
+func printWkdir(dirname string) {
+	dir, err := os.Getwd()
+	if err != nil {
+		fatal(ErrWkdir)
+	}
+
+	fmt.Printf("Creating a new %sGo%s app in %s%s/%s\n%s", colors.Cyan, colors.Default, colors.Green, dir, dirname, colors.Default)
+}
+
+func checkNamed(flags []*bool) {
+	var providedFlags int // If a flag is provided, increment this variable.
+	for i := 0; i < len(flags); i++ {
+		if *flags[i] {
+			providedFlags++
+		}
+	}
+	// Only one type of flag is allowed: cli, http, or module.
+	if providedFlags != 1 {
+		fatal(ErrNameFlag)
+	}
+}
+
+func checkNonNamed(flags []string) {
+	if len(flags) != 1 {
+		fatal(ErrNonNameFlag)
+	}
+}
+
+func setupFlags() []*bool {
+	cli := flag.Bool("cli", false, "Create a CLI app")
+	http := flag.Bool("http", false, "Create an HTTP server")
+	module := flag.Bool("lib", false, "Create a shareable library")
+
+	return []*bool{cli, http, module}
+}

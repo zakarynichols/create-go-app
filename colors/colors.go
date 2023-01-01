@@ -1,9 +1,5 @@
 package colors
 
-import (
-	"runtime"
-)
-
 const (
 	Reset   = "\033[0m"
 	Red     = "\033[31m"
@@ -28,12 +24,7 @@ type Colors struct {
 	Default string
 }
 
-// Might not need a constructer. Come back to this and find a conclusion.
 func New() Colors {
-	if runtime.GOOS == "window" {
-		return Colors{}
-	}
-
 	return Colors{
 		Reset,
 		Red,
