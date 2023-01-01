@@ -10,11 +10,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/zakarynichols/create-go-app/clock"
 	"github.com/zakarynichols/create-go-app/code"
 	"github.com/zakarynichols/create-go-app/colors"
 	"github.com/zakarynichols/create-go-app/perm"
 	"github.com/zakarynichols/create-go-app/print"
+	"github.com/zakarynichols/create-go-app/timer"
 )
 
 // Errors exposed to the user. Stack traces and more detailed
@@ -39,32 +39,39 @@ type program struct {
 }
 
 func main() {
-	timer := clock.Timer()
+	// Construct a new timer.
+	t := timer.New()
 
-	app := new(program)
+	// Init a new program as a pointer.
+	prog := new(program)
 
+	// Setup flags state and usage handler.
+	namedFlags := namedFlags() // If using pointers, must be declared before flag.Parse().
 	flag.Usage = usage
 	flag.Parse()
 
+	// Init and validate flags.
 	nonNamedFlags := flag.Args()
 	errNonNamed(nonNamedFlags)
-	app.dirname = nonNamedFlags[0]
+	prog.dirname = nonNamedFlags[0]
+	errNamed(namedFlags)
 
-	errNamed(namedFlags())
-
-	printWkdir(app.dirname)
-	printCheckExists(app.dirname)
-	printMkdir(app.dirname)
-	printWriteFile(app.dirname)
-	printChdir(app.dirname)
-	app.printModInit()
+	// Core functions that interface with the user directing the flow of the CLI program.
+	printWkdir(prog.dirname)
+	printCheckExists(prog.dirname)
+	printMkdir(prog.dirname)
+	printWriteFile(prog.dirname)
+	printChdir(prog.dirname)
+	printModInit(prog)
 	printFmtCode()
 
-	elapsed := timer.Since(timer.Start)
+	// Get the time it took for the program to complete.
+	elapsed := t.Since(t.Start)
 
 	fmt.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
 }
 
+// printFmtCode runs the go fmt command.
 func printFmtCode() {
 	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
 	cmd := exec.Command("go", "fmt", "./...")
@@ -76,7 +83,7 @@ func printFmtCode() {
 }
 
 // printModInit sets up the package with a custom module name read from stdin.
-func (app *program) printModInit() {
+func printModInit(prog *program) {
 	fmt.Print("go mod init: ")
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
@@ -86,10 +93,10 @@ func (app *program) printModInit() {
 
 	fmt.Print("\n")
 
-	app.module = strings.Trim(input, "\r\n")
+	prog.module = strings.Trim(input, "\r\n")
 
-	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", colors.White, colors.Cyan, app.module, colors.Default)
-	cmd := exec.Command("go", "mod", "init", app.module)
+	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", colors.White, colors.Cyan, prog.module, colors.Default)
+	cmd := exec.Command("go", "mod", "init", prog.module)
 	err = cmd.Run()
 	if err != nil {
 		fatal(ErrInitMod)
