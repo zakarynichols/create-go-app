@@ -9,8 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"time"
 
+	"github.com/zakarynichols/create-go-app/clock"
 	"github.com/zakarynichols/create-go-app/code"
 	"github.com/zakarynichols/create-go-app/colors"
 	"github.com/zakarynichols/create-go-app/perm"
@@ -38,24 +38,10 @@ type application struct {
 	module  string
 }
 
-type elapse struct {
-	start time.Time
-	since func(start time.Time) time.Duration
-}
-
-func recordTime() elapse {
-	return elapse{
-		start: time.Now(),
-		since: func(start time.Time) time.Duration {
-			return time.Since(start)
-		},
-	}
-}
-
 func main() {
 	app := new(application)
 
-	elapse := recordTime()
+	timer := clock.Timer()
 
 	namedFlagPtrs := setupFlags()
 
@@ -81,7 +67,7 @@ func main() {
 
 	fmt.Print("\n")
 
-	writeFiles(app.dirname)
+	writeFile(app.dirname)
 
 	chdir(app.dirname)
 
@@ -93,7 +79,7 @@ func main() {
 
 	fmtCode()
 
-	elapsed := elapse.since(elapse.start)
+	elapsed := timer.Since(timer.Start)
 
 	fmt.Print("\n")
 
@@ -109,6 +95,7 @@ func fmtCode() {
 	}
 }
 
+// modInit sets up the package with a custom module name read from stdin.
 func (app *application) modInit() {
 	fmt.Print("go mod init: ")
 	reader := bufio.NewReader(os.Stdin)
@@ -119,17 +106,12 @@ func (app *application) modInit() {
 
 	fmt.Print("\n")
 
-	app.module = strings.TrimSuffix(input, "\n")
+	app.module = strings.Trim(input, "\r\n")
 
 	fmt.Printf("%sInitializing a module: %sgo mod init %s%s\n", colors.White, colors.Cyan, app.module, colors.Default)
 	cmd := exec.Command("go", "mod", "init", app.module)
 	err = cmd.Run()
 	if err != nil {
-		// Currently inside package directory. Move up a directory before handling errors.
-		err = os.Chdir("../")
-		if err != nil {
-			fatal(ErrChdir)
-		}
 		fatal(ErrInitMod)
 	}
 }
@@ -160,7 +142,8 @@ func chdir(dirname string) {
 	}
 }
 
-func writeFiles(dirname string) {
+// writeFile may write multiple files depending on requirements for other types of apps.
+func writeFile(dirname string) {
 	fmt.Printf("%sWriting %smain.go%s file...%s\n", colors.White, colors.Cyan, colors.White, colors.Default)
 	err := os.WriteFile(dirname+"/main.go", []byte(code.HTTP), perm.RW)
 	fmt.Print("\n")
@@ -169,6 +152,7 @@ func writeFiles(dirname string) {
 	}
 }
 
+// mkdir makes a new directory with read, write, and execute permissions.
 func mkdir(dirname string) {
 	fmt.Printf("%sMaking new dir %s./%s%s\n", colors.White, colors.Green, dirname, colors.Default)
 	err := os.Mkdir(dirname, perm.RWX)
@@ -177,6 +161,7 @@ func mkdir(dirname string) {
 	}
 }
 
+// checkExists will trying opening an existing directory. If a dir exists (there is no error) then fatally exit.
 func checkExists(dirname string) {
 	fmt.Printf("Checking if %s./%s%s already exists...%s\n", colors.Green, dirname, colors.White, colors.Default)
 	_, err := os.Open("./" + dirname)
@@ -185,6 +170,7 @@ func checkExists(dirname string) {
 	}
 }
 
+// printWkdir prints the new packages working directory.
 func printWkdir(dirname string) {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -194,6 +180,7 @@ func printWkdir(dirname string) {
 	fmt.Printf("Creating a new %sGo%s app in %s%s/%s\n%s", colors.Cyan, colors.Default, colors.Green, dir, dirname, colors.Default)
 }
 
+// checkNamed checks all the named flags and errors if only one is not set.
 func checkNamed(flags []*bool) {
 	var providedFlags int // If a flag is provided, increment this variable.
 	for i := 0; i < len(flags); i++ {
@@ -207,16 +194,28 @@ func checkNamed(flags []*bool) {
 	}
 }
 
+// checkNonNamed checks all the non-named flags and errors if only one is not set.
 func checkNonNamed(flags []string) {
 	if len(flags) != 1 {
 		fatal(ErrNonNameFlag)
 	}
 }
 
+// setupFlags prepares the pointer flags for consumption. The flags setup logic should live here.
 func setupFlags() []*bool {
 	cli := flag.Bool("cli", false, "Create a CLI app")
 	http := flag.Bool("http", false, "Create an HTTP server")
 	module := flag.Bool("lib", false, "Create a shareable library")
 
 	return []*bool{cli, http, module}
+}
+
+// debugCmdRun helps debug the output from cmd.Run method.
+func debugCmdRun(cmd *exec.Cmd) {
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(output))
+		return
+	}
+	fmt.Println(string(output))
 }
