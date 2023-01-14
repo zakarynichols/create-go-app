@@ -1,24 +1,15 @@
 # Create Go App
 
-If running with files next to main.go with package name main you need to run `go run *.go`
+Create a simple, minimal, and unopinionated go cli, web server, or library boilerplate with a single command.
 
-Create a simple, minimal, and unopinionated go cli, web server, or module with a single command.
+## HTTP Server
 
-To create an application called 'my-app', use `go run` to compile and execute the program.
+`$ go run create-go-app.com@latest --type http my-http-server`
 
-### HTTP Server
+## CLI
 
-```sh
-$ go run github.com/zakarynichols/create-go-app my-app
-$ cd ./my-app
-$ go run main.go
-> Listening on port 9999
-```
+`$ go run create-go-app.com@latest --type cli my-cli`
 
-### CLI
+## Library
 
-Docs in progress...
-
-### Module
-
-Docs in progress...
+`$ go run create-go-app.com@latest --type lib my-library`
