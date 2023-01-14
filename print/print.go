@@ -12,19 +12,6 @@ import (
 
 const logFile = "create-go-app-debug.txt"
 
-// Colorf prints a color formatted string. After writing its
-// output, the terminal color is reset to the operating system default.
-func Colorf(strs ...string) {
-	col := colors.New()
-	for i := 0; i < len(strs); i++ {
-		fmt.Printf("%s%s", strs[i], col.Default)
-	}
-}
-
-// Errorln prints a formatted error with new
-// lines above and below the written output.
-// After writing the output it will exit
-// with a provided status code.
 func Errorln(err error) {
 	fmt.Print("\n")
 	fmt.Printf("%s%s\n%s", colors.Red, err.Error(), colors.Default)
