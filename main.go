@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -12,23 +11,6 @@ import (
 	"create-go-app.com/formatter"
 	"create-go-app.com/modules"
 	"create-go-app.com/timer"
-)
-
-// Errors exposed to the user. Stack traces and more detailed
-// errors for debugging will be written to a log file.
-var (
-	ErrDirExists     = errors.New("create-go-app: directory already exists")
-	ErrMkdir         = errors.New("create-go-app: failed to create directory")
-	ErrChdir         = errors.New("create-go-app: failed to change directory")
-	ErrWkdir         = errors.New("create-go-app: failed to get working directory")
-	ErrInitMod       = errors.New("create-go-app: failed to init a module")
-	ErrFmt           = errors.New("create-go-app: failed to format code")
-	ErrWriteFiles    = errors.New("create-go-app: failed to write files")
-	ErrReadModule    = errors.New("create-go-app: failed to read module name")
-	ErrEmptyModule   = errors.New("create-go-app: module name cannot be empty")
-	ErrLongModule    = errors.New("create-go-app: module name is too long")
-	ErrInvalidModule = errors.New("create-go-app: invalid module name")
-	ErrNamedFlag     = errors.New("create-go-app: invalid named flag")
 )
 
 type App struct {
@@ -61,7 +43,7 @@ func main() {
 	// Validate the non-named flags. There should only be one.
 	validNonNamedFlags, err := cmdFlags.ValidateNonNamed(nonNamedFlags)
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrNonNamedFlag, colors.Default)
 		os.Exit(1)
 	}
 
@@ -70,13 +52,13 @@ func main() {
 
 	err = cmdFlags.ValidateNamed(*flagType)
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
 		os.Exit(1)
 	}
 
 	wkdir, err := directories.GetWorkingDirectory()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrWkdir, colors.Default)
 		os.Exit(1)
 	}
 	fmt.Printf("Creating a new %sGo%s app in %s%s/%s\n%s", colors.Cyan, colors.Default, colors.Green, wkdir, app.dirname, colors.Default)
@@ -94,7 +76,7 @@ func main() {
 
 	err = directories.Create(app.dirname)
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrCreateDir, colors.Default)
 		os.Exit(1)
 	}
 	fmt.Printf("%sMaking new dir %s./%s%s\n", colors.White, colors.Green, app.dirname, colors.Default)
@@ -103,7 +85,7 @@ func main() {
 
 	err = directories.CreateFile(app.dirname, app.program)
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrCreateFile, colors.Default)
 		os.Exit(1)
 	}
 	fmt.Printf("%sWriting %smain.go%s file...%s\n", colors.White, colors.Cyan, colors.White, colors.Default)
@@ -112,7 +94,7 @@ func main() {
 
 	err = directories.Change(app.dirname)
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
 		os.Exit(1)
 	}
 	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", colors.White, colors.Cyan, colors.Green, app.dirname, colors.Default)
@@ -121,7 +103,7 @@ func main() {
 
 	err = modules.ValidateModule()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrInvalidModule, colors.Default)
 		os.Exit(1)
 	}
 
@@ -129,7 +111,7 @@ func main() {
 
 	err = formatter.FormatCode()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, err, colors.Default)
+		fmt.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
 		os.Exit(1)
 	}
 	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)

@@ -41,14 +41,16 @@ func GetWorkingDirectory() (string, error) {
 
 func CreateFile(dirname, flagName string) error {
 	var fileContent []byte
+	fileName := "main.go"
 	if flagName == "cli" {
 		fileContent = []byte(code.CLI)
 	} else if flagName == "http" {
 		fileContent = []byte(code.HTTP)
 	} else if flagName == "lib" {
 		fileContent = []byte(code.LIB)
+		fileName = "lib.go"
 	}
-	err := os.WriteFile(dirname+"/main.go", fileContent, os.FileMode(0777))
+	err := os.WriteFile(dirname+"/"+fileName, fileContent, os.FileMode(0777))
 	if err != nil {
 		return err
 	}

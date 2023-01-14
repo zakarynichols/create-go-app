@@ -1,5 +1,7 @@
 # Create Go App
 
+If running with files next to main.go with package name main you need to run `go run *.go`
+
 Create a simple, minimal, and unopinionated go cli, web server, or module with a single command.
 
 To create an application called 'my-app', use `go run` to compile and execute the program.
