@@ -11,11 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/zakarynichols/create-go-app/code"
-	"github.com/zakarynichols/create-go-app/colors"
-	"github.com/zakarynichols/create-go-app/perm"
-	"github.com/zakarynichols/create-go-app/print"
-	"github.com/zakarynichols/create-go-app/timer"
+	"create-go-app.com/code"
+	"create-go-app.com/colors"
+	"create-go-app.com/timer"
 )
 
 // Errors exposed to the user. Stack traces and more detailed
@@ -34,13 +32,15 @@ var (
 	ErrEmptyModule   = errors.New("create-go-app: module name cannot be empty")
 	ErrLongModule    = errors.New("create-go-app: module name is too long")
 	ErrInvalidModule = errors.New("create-go-app: invalid module name")
+	ErrNamedFlag     = errors.New("create-go-app: invalid named flag")
 )
 
 // program is the structure describing the initialized program.
 // It should have a directory name and a module name.
 type program struct {
-	dirname string
-	module  string
+	dirname   string
+	module    string
+	component string
 }
 
 func main() {
@@ -52,13 +52,14 @@ func main() {
 	prog := new(program)
 	// Setup flags state and usage handler.
 	namedFlags := namedFlags() // If using pointers, must be declared before flag.Parse().
+	prog.component = namedFlags
 	flag.Usage = usage
 	flag.Parse()
 	// Init and validate flags.
 	nonNamedFlags := flag.Args()
 	errNonNamed(nonNamedFlags)
 	prog.dirname = nonNamedFlags[0]
-	errNamed(namedFlags)
+	validateNamedFlags(namedFlags)
 	// Core functions that interface with the user directing the flow of the CLI program.
 	err := getCurrentWorkingDirectory(prog.dirname)
 	if err != nil {
@@ -67,7 +68,7 @@ func main() {
 	}
 	checkIfDirectoryExists(prog.dirname)
 	createDirectory(prog.dirname)
-	createFile(prog.dirname)
+	createFile(prog.dirname, prog.component)
 	changeDirectory(prog.dirname)
 	validateModule(prog)
 	formatCode()
@@ -126,11 +127,11 @@ func validateModule(prog *program) error {
 }
 
 // fatal is the main error handling mechanism. It prints an error message, writes a debug log, and exits with a status code 1.
-func fatal(err error) {
-	print.Errorln(err)
-	print.WriteDebugLog(err)
-	os.Exit(1)
-}
+// func fatal(err error) {
+// 	print.Errorln(err)
+// 	print.WriteDebugLog(err)
+// 	os.Exit(1)
+// }
 
 // usage overrides the default `flag.Usage`.
 func usage() {
@@ -143,43 +144,55 @@ func usage() {
 	flag.PrintDefaults()
 }
 
-func changeDirectory(dirname string) {
+func changeDirectory(dirname string) error {
 	fmt.Printf("%sChanging to dir: %scd %s./%s%s\n", colors.White, colors.Cyan, colors.Green, dirname, colors.Default)
 	err := os.Chdir("./" + dirname)
 	if err != nil {
-		fatal(ErrChdir)
+		return fmt.Errorf("%w: %v", ErrChdir, err)
 	}
 	fmt.Print("\n")
+	return nil
 }
 
 // createFile may write multiple files depending on requirements for other types of apps.
-func createFile(dirname string) {
+func createFile(dirname, flagName string) error {
 	fmt.Printf("%sWriting %smain.go%s file...%s\n", colors.White, colors.Cyan, colors.White, colors.Default)
-	err := os.WriteFile(dirname+"/main.go", []byte(code.HTTP), perm.RW)
+	var fileContent []byte
+	if flagName == "cli" {
+		fileContent = []byte(code.CLI)
+	} else if flagName == "http" {
+		fileContent = []byte(code.HTTP)
+	} else if flagName == "lib" {
+		fileContent = []byte(code.LIB)
+	}
+	err := os.WriteFile(dirname+"/main.go", fileContent, os.FileMode(0777))
 	if err != nil {
-		fatal(ErrWriteFiles)
+		return fmt.Errorf("%w: %v", ErrWriteFiles, err)
 	}
 	fmt.Print("\n")
+	return nil
 }
 
 // createDirectory makes a new directory with read, write, and execute permissions.
-func createDirectory(dirname string) {
+func createDirectory(dirname string) error {
 	fmt.Printf("%sMaking new dir %s./%s%s\n", colors.White, colors.Green, dirname, colors.Default)
-	err := os.Mkdir(dirname, perm.RWX)
+	err := os.Mkdir(dirname, os.FileMode(0777))
 	if err != nil {
-		fatal(ErrMkdir)
+		return fmt.Errorf("%w: %v", ErrMkdir, err)
 	}
 	fmt.Print("\n")
+	return nil
 }
 
 // checkIfDirectoryExists will trying opening an existing directory. If a dir exists (there is no error) then fatally exit.
-func checkIfDirectoryExists(dirname string) {
+func checkIfDirectoryExists(dirname string) error {
 	fmt.Printf("Checking if %s./%s%s already exists...%s\n", colors.Green, dirname, colors.White, colors.Default)
 	_, err := os.Open("./" + dirname)
 	if err == nil {
-		fatal(ErrDirExists)
+		return fmt.Errorf("%w: %v", ErrDirExists, err)
 	}
 	fmt.Print("\n")
+	return nil
 }
 
 func getCurrentWorkingDirectory(dirname string) error {
@@ -193,31 +206,26 @@ func getCurrentWorkingDirectory(dirname string) error {
 }
 
 // errNamed checks all the named flags and errors if only one is not set.
-func errNamed(flags []*bool) {
-	var providedFlags int // If a flag is provided, increment this variable.
-	for i := 0; i < len(flags); i++ {
-		if *flags[i] {
-			providedFlags++
-		}
+func validateNamedFlags(flagType string) error {
+	if flagType == "" {
+		return fmt.Errorf("%w", ErrNameFlag)
 	}
-	// Only one type of flag is allowed: cli, http, or module.
-	if providedFlags != 1 {
-		fatal(ErrNameFlag)
+	if flagType != "cli" && flagType != "http" && flagType != "lib" {
+		return fmt.Errorf("%w", ErrNamedFlag)
 	}
+	return nil
 }
 
 // errNonNamed checks all the non-named flags and errors if only one is not set.
-func errNonNamed(flags []string) {
-	if len(flags) != 1 {
-		fatal(ErrNonNameFlag)
+func errNonNamed(nonNamedFlags []string) error {
+	if len(nonNamedFlags) != 1 {
+		return fmt.Errorf("%w", ErrNonNameFlag)
 	}
+	return nil
 }
 
-// namedFlags prepares the pointer flags for consumption. The flags setup logic should live here.
-func namedFlags() []*bool {
-	cli := flag.Bool("cli", false, "Create a CLI app")
-	http := flag.Bool("http", false, "Create an HTTP server")
-	module := flag.Bool("lib", false, "Create a shareable library")
-
-	return []*bool{cli, http, module}
+func namedFlags() string {
+	flagType := flag.String("type", "", "Type of project to create. Options are: cli, http, lib")
+	flag.Parse()
+	return *flagType
 }

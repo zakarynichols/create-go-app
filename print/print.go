@@ -2,12 +2,12 @@ package print
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"runtime/debug"
 
-	"github.com/zakarynichols/create-go-app/colors"
-	"github.com/zakarynichols/create-go-app/perm"
+	"create-go-app.com/colors"
 )
 
 const logFile = "create-go-app-debug.txt"
@@ -28,7 +28,7 @@ func WriteDebugLog(debugErr error) {
 		log.Fatal(err)
 	}
 
-	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE, perm.RWX)
+	f, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE, fs.FileMode(0777))
 	if err != nil {
 		log.Fatal(err)
 	}
