@@ -10,20 +10,19 @@ import (
 	"create-go-app.com/directories"
 	"create-go-app.com/formatter"
 	"create-go-app.com/modules"
-	"create-go-app.com/timer"
+	"create-go-app.com/stopwatch"
 )
 
 type App struct {
 	dirname string
-	program string // HTTP, CLI, or library.
+	flag    string // HTTP, CLI, or library.
 }
 
 func main() {
 	// Make sure ANSI codes are supported by this terminal.
 	colors.CheckTerminal()
 
-	// Construct a new timer.
-	t := timer.New()
+	sw := stopwatch.Start()
 
 	// Init a new program as a pointer.
 	app := new(App)
@@ -35,22 +34,22 @@ func main() {
 
 	flag.Parse()
 
-	app.program = *flagType
+	app.flag = *flagType
 
 	// Get all non-named flags passed to the program.
 	nonNamedFlags := flag.Args()
 
 	// Validate the non-named flags. There should only be one.
-	validNonNamedFlags, err := cmdFlags.ValidateNonNamed(nonNamedFlags)
+	validNonNamedFlag, err := cmdFlags.ValidateNonNamed(nonNamedFlags)
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrNonNamedFlag, colors.Default)
 		os.Exit(1)
 	}
 
-	// Assign the last non-named flag to the program's root directory name.
-	app.dirname = validNonNamedFlags
+	// Assign the last and only non-named flag to the apps's root directory name.
+	app.dirname = validNonNamedFlag
 
-	err = cmdFlags.ValidateNamed(*flagType)
+	err = cmdFlags.ValidateNamed(app.flag)
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
 		os.Exit(1)
@@ -83,7 +82,7 @@ func main() {
 
 	fmt.Printf("\n")
 
-	err = directories.CreateFile(app.dirname, app.program)
+	err = directories.CreateFile(app.dirname, app.flag)
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrCreateFile, colors.Default)
 		os.Exit(1)
@@ -119,7 +118,7 @@ func main() {
 	fmt.Printf("\n")
 
 	// Get the time it took for the program to complete.
-	elapsed := t.Since(t.Start)
+	elapsed := sw.Elapsed()
 
 	fmt.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
 }
