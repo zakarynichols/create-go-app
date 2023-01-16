@@ -15,7 +15,7 @@ import (
 
 type App struct {
 	dirname string
-	flag    string // HTTP, CLI, or library.
+	flag    string // http, cli, or lib.
 }
 
 func main() {
