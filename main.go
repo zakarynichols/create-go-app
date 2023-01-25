@@ -108,7 +108,7 @@ func main() {
 
 	fmt.Printf("\n")
 
-	err = formatter.FormatCode()
+	_, err = formatter.FormatCode()
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
 		os.Exit(1)
@@ -130,7 +130,7 @@ func usage() {
 	fmt.Printf("\n")
 	fmt.Printf("  The last argument must be the name. e.g. 'my-app'\n")
 	fmt.Printf("\n")
-	fmt.Printf("  Available types: cli, http, lib\n")
+	fmt.Printf("  Available types: cli or http\n")
 	fmt.Printf("\n")
 	flag.PrintDefaults()
 }

@@ -43,12 +43,9 @@ func CreateFile(dirname, flagName string) error {
 	var fileContent []byte
 	fileName := "main.go"
 	if flagName == "cli" {
-		fileContent = []byte(code.CLI)
+		fileContent = []byte(code.CliMain)
 	} else if flagName == "http" {
-		fileContent = []byte(code.HTTP)
-	} else if flagName == "lib" {
-		fileContent = []byte(code.LIB)
-		fileName = "lib.go"
+		fileContent = []byte(code.HttpMain)
 	}
 	err := os.WriteFile(dirname+"/"+fileName, fileContent, os.FileMode(0777))
 	if err != nil {

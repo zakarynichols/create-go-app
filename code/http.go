@@ -1,7 +1,7 @@
 package code
 
-// HTTP is the template for main.go when initializing an http server.
-const HTTP string = `
+// HttpMain is the template for main.go when initializing an http server.
+const HttpMain string = `
 package main
 
 import (

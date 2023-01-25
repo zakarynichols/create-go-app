@@ -6,7 +6,7 @@ import (
 
 var (
 	ErrInvalidNonNamed = errors.New("create-go-app: only one non-named flag argument allowed")
-	ErrInvalidNamed    = errors.New("create-go-app: only a single named flag can be used to init a package. e.g. --cli, --http, or --module")
+	ErrInvalidNamed    = errors.New("create-go-app: only a single named flag can be used to init a package. e.g. --cli or --http")
 )
 
 // ValidateNonNamed function validates the non-named flags passed to the application

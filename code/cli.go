@@ -2,7 +2,7 @@ package code
 
 // package for a basic cli program
 // go run main.go -string=Hello -bool=true -int=10 -custom=myCustomFlag
-const CLI string = `
+const CliMain string = `
 package main
 
 import (

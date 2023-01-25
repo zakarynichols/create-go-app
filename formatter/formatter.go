@@ -4,11 +4,11 @@ import (
 	"os/exec"
 )
 
-func FormatCode() error {
+func FormatCode() ([]byte, error) {
 	cmd := exec.Command("go", "fmt", "./...")
-	_, err := cmd.CombinedOutput()
+	b, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return b, nil
 }
