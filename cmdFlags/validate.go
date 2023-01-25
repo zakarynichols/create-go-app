@@ -19,7 +19,7 @@ func ValidateNonNamed(flags []string) (string, error) {
 
 // ValidateNamed function validates the named flags passed to the application
 func ValidateNamed(flagType string) error {
-	if flagType != "cli" && flagType != "http" && flagType != "lib" {
+	if flagType != "cli" && flagType != "http" {
 		return ErrInvalidNamed
 	}
 	return nil
