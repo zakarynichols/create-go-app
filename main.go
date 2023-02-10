@@ -70,9 +70,16 @@ func main() {
 		if err != nil {
 			return err
 		}
+
+		dstPath := filepath.Join(app.dirname, strings.TrimPrefix(path, app.dirname))
+
 		if d.IsDir() {
-			fmt.Println(d.Name())
-			return nil
+			err := os.Mkdir(dstPath, os.FileMode(0777))
+			if os.IsExist(err) {
+				return nil
+			} else {
+				return err
+			}
 		}
 		f, err := content.Open(path)
 		if err != nil {
@@ -87,26 +94,24 @@ func main() {
 		if err != nil {
 			return err
 		}
-		log.Printf("%q", b)
+		// log.Printf("%q", b)
 		// return nil
 
 		if err != nil {
 			return err
 		}
 
-		dstPath := filepath.Join(app.dirname, strings.TrimPrefix(path, app.dirname))
-
-		if d.IsDir() {
-			err := os.MkdirAll(dstPath, os.FileMode(0777))
-			if err != nil {
-				return err
-			}
-		} else {
-			_, err := cpFile(path, dstPath) // return the written bytes?
-			if err != nil {
-				return err
-			}
+		dstFile, err := os.Create(dstPath)
+		if err != nil {
+			return err
 		}
+		defer dstFile.Close()
+
+		err = ioutil.WriteFile(dstPath, b, 0777)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
