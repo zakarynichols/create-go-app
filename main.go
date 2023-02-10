@@ -66,7 +66,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = fs.WalkDir(content, "emit", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(content, ".", func(path string, d fs.DirEntry, err error) error {
 		// if err != nil {
 		// 	return err
 		// }
