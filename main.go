@@ -67,27 +67,27 @@ func main() {
 	}
 
 	err = fs.WalkDir(content, ".", func(path string, d fs.DirEntry, err error) error {
-		// if err != nil {
-		// 	return err
-		// }
-		// if d.IsDir() {
-		// 	fmt.Println(d.Name())
-		// 	return nil
-		// }
-		// f, err := content.Open(path)
-		// if err != nil {
-		// 	return err
-		// }
-		// s, err := f.Stat()
-		// if err != nil {
-		// 	return err
-		// }
-		// fmt.Println(s.Name())
-		// // b, err := io.ReadAll(f)
-		// // if err != nil {
-		// // 	return err
-		// // }
-		// // log.Printf("%q", b)
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			fmt.Println(d.Name())
+			return nil
+		}
+		f, err := content.Open(path)
+		if err != nil {
+			return err
+		}
+		s, err := f.Stat()
+		if err != nil {
+			return err
+		}
+		fmt.Println(s.Name())
+		b, err := io.ReadAll(f)
+		if err != nil {
+			return err
+		}
+		log.Printf("%q", b)
 		// return nil
 
 		if err != nil {
