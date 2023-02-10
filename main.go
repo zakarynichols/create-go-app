@@ -62,7 +62,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = Cp("_emit", app.dirname)
+	err = Cp("emit", app.dirname)
 	if err != nil {
 		log.Fatal(err)
 	}
