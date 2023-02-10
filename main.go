@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -107,7 +106,7 @@ func main() {
 		}
 		defer dstFile.Close()
 
-		err = ioutil.WriteFile(dstPath, b, 0777)
+		err = os.WriteFile(dstPath, b, 0777)
 		if err != nil {
 			return err
 		}
@@ -118,9 +117,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return
-
 	// err = Cp("emit", app.dirname)
 	// if err != nil {
 	// 	log.Fatal(err)
@@ -133,6 +129,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return
 
 	err = directories.Change(app.dirname + "/go")
 	if err != nil {
@@ -302,14 +300,14 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 	}
 
 	if matched {
-		read, err := ioutil.ReadFile(path)
+		read, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
 
 		newContents := strings.Replace(string(read), prev, new, -1)
 
-		err = ioutil.WriteFile(path, []byte(newContents), 0)
+		err = os.WriteFile(path, []byte(newContents), 0)
 		if err != nil {
 			return err
 		}
