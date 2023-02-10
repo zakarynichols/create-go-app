@@ -16,6 +16,7 @@ var (
 	ErrLongModule    = errors.New("create-go-app: module name is too long")
 	ErrInvalidModule = errors.New("create-go-app: invalid module name")
 	ErrNamedFlag     = errors.New("create-go-app: invalid named flag parameters")
-	ErrNonNamedFlag  = errors.New("create-go-app: invalid non-named flag parameters")
+	ErrPosArgs       = errors.New("create-go-app: invalid positional arguments")
 	ErrCreateFile    = errors.New("create-go-app: failed to create file")
+	ErrNamedFlags    = errors.New("create-go-app: please provide only a single named flag")
 )
