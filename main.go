@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"flag"
 	"fmt"
 	"io"
@@ -17,6 +18,9 @@ import (
 	"create-go-app.com/pkg/colors"
 	"create-go-app.com/pkg/timer"
 )
+
+//go:embed emit
+var content embed.FS
 
 const BaseRepo = "github.com/username/repo"
 
@@ -62,10 +66,60 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = Cp("testdata", app.dirname)
+	err = fs.WalkDir(content, "emit", func(path string, d fs.DirEntry, err error) error {
+		// if err != nil {
+		// 	return err
+		// }
+		// if d.IsDir() {
+		// 	fmt.Println(d.Name())
+		// 	return nil
+		// }
+		// f, err := content.Open(path)
+		// if err != nil {
+		// 	return err
+		// }
+		// s, err := f.Stat()
+		// if err != nil {
+		// 	return err
+		// }
+		// fmt.Println(s.Name())
+		// // b, err := io.ReadAll(f)
+		// // if err != nil {
+		// // 	return err
+		// // }
+		// // log.Printf("%q", b)
+		// return nil
+
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(app.dirname, strings.TrimPrefix(path, app.dirname))
+
+		if d.IsDir() {
+			err := os.MkdirAll(dstPath, os.FileMode(0777))
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := cpFile(path, dstPath) // return the written bytes?
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return
+
+	// err = Cp("emit", app.dirname)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	err = filepath.WalkDir(app.dirname, func(path string, d fs.DirEntry, err error) error {
 		return changeGoImports(path, d, BaseRepo, app.dirname)
@@ -191,7 +245,7 @@ func usage() {
 
 // Used to copy _emitted into the users new directory
 func Cp(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+	return filepath.WalkDir(src, func(path string, info fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -199,7 +253,7 @@ func Cp(src, dst string) error {
 		dstPath := filepath.Join(dst, strings.TrimPrefix(path, src))
 
 		if info.IsDir() {
-			err := os.MkdirAll(dstPath, info.Mode())
+			err := os.MkdirAll(dstPath, info.Type())
 			if err != nil {
 				return err
 			}
