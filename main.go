@@ -259,16 +259,3 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 
 	return nil
 }
-
-/*
-	!!! Actually, this may not be the easiest way. Still tedious !!!
-	Logically, it may be better to dynamically create the directories and files by domain
-	(go, node, playwright, postgres, swagger) individually rather than walk a pre-defined path.
-	This would give finer control over the templates and less abstraction, which will hopefully
-	promote readability.
-
-	!!! New idea... !!!
-	Copy files from the _emitted directory (underscore prefix is ignored by go tools).
-	The files that need changes can be a specific template or walk the files and look
-	for the specific areas that need changed.
-*/
