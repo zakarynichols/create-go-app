@@ -3,15 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"io/fs"
+	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"create-go-app.com/cmdFlags"
-	"create-go-app.com/colors"
 	"create-go-app.com/directories"
-	"create-go-app.com/formatter"
-	"create-go-app.com/modules"
-	"create-go-app.com/stopwatch"
+	"create-go-app.com/gotools"
+	"create-go-app.com/pkg/colors"
+	"create-go-app.com/pkg/timer"
 )
+
+const BaseRepo = "github.com/username/repo"
 
 type App struct {
 	dirname string
@@ -22,9 +29,9 @@ func main() {
 	// Make sure ANSI codes are supported by this terminal.
 	colors.CheckTerminal()
 
-	sw := stopwatch.Start()
+	sw := timer.Start()
 
-	// Init a new program as a pointer.
+	// Allocate zero-value app.
 	app := new(App)
 
 	// Setup flags state and usage handler.
@@ -55,6 +62,33 @@ func main() {
 		os.Exit(1)
 	}
 
+	err = Cp("_emitted", app.dirname)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = filepath.WalkDir(app.dirname, func(path string, d fs.DirEntry, err error) error {
+		return changeGoImports(path, d, BaseRepo, app.dirname)
+	})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = directories.Change(app.dirname + "/go")
+	if err != nil {
+		fmt.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
+		os.Exit(1)
+	}
+
+	err = gotools.ChangeModuleName(app.dirname)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return
+
 	wkdir, err := directories.GetWorkingDirectory()
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrWkdir, colors.Default)
@@ -82,7 +116,8 @@ func main() {
 
 	fmt.Printf("\n")
 
-	err = directories.CreateFile(app.dirname, app.flag)
+	// err = directories.CreateMainFile(app.dirname, app.flag)
+	// mainFile, err := os.Create(app.dirname + "/" + emitted.Combined[0].Filename + ".go")
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrCreateFile, colors.Default)
 		os.Exit(1)
@@ -90,6 +125,25 @@ func main() {
 	fmt.Printf("%sWriting %smain.go%s file...%s\n", colors.White, colors.Cyan, colors.White, colors.Default)
 
 	fmt.Printf("\n")
+
+	// mainTemp := template.Must(template.New(emitted.Combined[0].Filename).Parse(emitted.Combined[0].Text))
+	// err = mainTemp.Execute(mainFile, struct{ Port int }{Port: 9999})
+
+	// Create go package
+	// err = os.Mkdir(app.dirname+"/go", os.FileMode(0777))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// goFile, err := os.Create(app.dirname + "/go/" + emittedgo.GoTemplate.Filename + ".go")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// goTemp := template.Must(template.New(emittedgo.GoTemplate.Filename).Parse(emittedgo.GoTemplate.Text))
+	// err = goTemp.Execute(goFile, nil)
+
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
 	err = directories.Change(app.dirname)
 	if err != nil {
@@ -100,7 +154,7 @@ func main() {
 
 	fmt.Printf("\n")
 
-	err = modules.ValidateModule()
+	err = gotools.ValidateModule()
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrInvalidModule, colors.Default)
 		os.Exit(1)
@@ -108,7 +162,7 @@ func main() {
 
 	fmt.Printf("\n")
 
-	_, err = formatter.FormatCode()
+	_, err = gotools.FormatCode()
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
 		os.Exit(1)
@@ -134,3 +188,87 @@ func usage() {
 	fmt.Printf("\n")
 	flag.PrintDefaults()
 }
+
+// Used to copy _emitted into the users new directory
+func Cp(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		dstPath := filepath.Join(dst, strings.TrimPrefix(path, src))
+
+		if info.IsDir() {
+			err := os.MkdirAll(dstPath, info.Mode())
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := cpFile(path, dstPath) // return the written bytes?
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func cpFile(src, dst string) (int64, error) {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer srcFile.Close()
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer dstFile.Close()
+	written, err := io.Copy(dstFile, srcFile)
+	return written, err
+}
+
+// Change go import paths in all files.
+// Will make this smarter to walk other paths in node or go.mod
+func changeGoImports(path string, d fs.DirEntry, prev string, new string) error {
+	if d.IsDir() {
+		return nil
+	}
+
+	matched, err := filepath.Match("*.go", d.Name())
+
+	if err != nil {
+		return err
+	}
+
+	if matched {
+		read, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		newContents := strings.Replace(string(read), prev, new, -1)
+
+		err = ioutil.WriteFile(path, []byte(newContents), 0)
+		if err != nil {
+			return err
+		}
+
+	}
+
+	return nil
+}
+
+/*
+	!!! Actually, this may not be the easiest way. Still tedious !!!
+	Logically, it may be better to dynamically create the directories and files by domain
+	(go, node, playwright, postgres, swagger) individually rather than walk a pre-defined path.
+	This would give finer control over the templates and less abstraction, which will hopefully
+	promote readability.
+
+	!!! New idea... !!!
+	Copy files from the _emitted directory (underscore prefix is ignored by go tools).
+	The files that need changes can be a specific template or walk the files and look
+	for the specific areas that need changed.
+*/

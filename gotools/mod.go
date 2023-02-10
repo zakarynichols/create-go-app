@@ -1,4 +1,4 @@
-package modules
+package gotools
 
 import (
 	"bufio"
@@ -37,6 +37,15 @@ func ValidateModule() error {
 		return err
 	}
 	err = initializeModule(input)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func ChangeModuleName(name string) error {
+	cmd := exec.Command("go", "mod", "edit", "-module", name)
+	_, err := cmd.CombinedOutput()
 	if err != nil {
 		return err
 	}

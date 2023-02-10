@@ -7,7 +7,7 @@ import (
 	"os"
 	"runtime/debug"
 
-	"create-go-app.com/colors"
+	"create-go-app.com/pkg/colors"
 )
 
 const logFile = "create-go-app-debug.txt"

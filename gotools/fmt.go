@@ -1,4 +1,4 @@
-package formatter
+package gotools
 
 import (
 	"os/exec"

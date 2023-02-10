@@ -1,0 +1,17 @@
+# How to validate Open API 3.0 spec with Github Actions CI
+# https://swagger.io/blog/api-design/validate-openapi-definitions-swagger-editor/
+# https://github.com/char0n/swagger-editor-validate
+
+on: [push]
+
+jobs:
+  test_swagger_editor_validator_remote:
+    runs-on: ubuntu-latest
+    name: Swagger Editor Validator Remote
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate OpenAPI definition
+        uses: char0n/swagger-editor-validate@v1
+        with:
+          definition-file: swagger.yaml

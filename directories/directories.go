@@ -2,11 +2,9 @@ package directories
 
 import (
 	"os"
-
-	"create-go-app.com/code"
 )
 
-// Create function creates a new directory with the name passed as argument
+// Create function creates a new directory with the name passed as argument.
 func Create(dir string) error {
 	if err := os.Mkdir(dir, os.ModePerm); err != nil {
 		return err
@@ -14,7 +12,7 @@ func Create(dir string) error {
 	return nil
 }
 
-// Exists function checks if a directory already exists or not
+// Exists function checks if a directory already exists or not.
 func Exists(dir string) error {
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
@@ -23,7 +21,7 @@ func Exists(dir string) error {
 	return err
 }
 
-// Change function changes the current working directory
+// Change function changes the current working directory.
 func Change(dir string) error {
 	if err := os.Chdir(dir); err != nil {
 		return err
@@ -31,25 +29,11 @@ func Change(dir string) error {
 	return nil
 }
 
+// GetWorkingDirectory gets the current working directory.
 func GetWorkingDirectory() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return "", err
 	}
 	return dir, nil
-}
-
-func CreateFile(dirname, flagName string) error {
-	var fileContent []byte
-	fileName := "main.go"
-	if flagName == "cli" {
-		fileContent = []byte(code.CliMain)
-	} else if flagName == "http" {
-		fileContent = []byte(code.HttpMain)
-	}
-	err := os.WriteFile(dirname+"/"+fileName, fileContent, os.FileMode(0777))
-	if err != nil {
-		return err
-	}
-	return nil
 }
