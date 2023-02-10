@@ -4,8 +4,8 @@
 
 ## HTTP Server
 
-`$ go run create-go-app.com@latest --type http my-http-server`
+`$ go run create-go-app.com@latest -http my-http-server`
 
 ## CLI
 
-`$ go run create-go-app.com@latest --type cli my-cli`
+`$ go run create-go-app.com@latest -cli my-cli`
