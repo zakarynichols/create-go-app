@@ -48,15 +48,3 @@ func CheckTerminal() {
 		Default = ""
 	}
 }
-
-type Colors struct {
-	Reset   string
-	Red     string
-	Green   string
-	Yellow  string
-	Blue    string
-	Purple  string
-	Cyan    string
-	White   string
-	Default string
-}
