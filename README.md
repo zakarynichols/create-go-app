@@ -8,4 +8,6 @@
 
 ## CLI
 
+_Creating a command line interface in one command is still under development._
+
 `$ go run create-go-app.com@latest -cli my-cli`
