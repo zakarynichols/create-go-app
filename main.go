@@ -17,7 +17,7 @@ import (
 	"create-go-app.com/pkg/timer"
 )
 
-//go:embed emit
+//go:embed all:emit
 var emitted embed.FS
 
 const BaseRepo = "github.com/username/repo"
@@ -83,6 +83,7 @@ func main() {
 
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
 	err = fs.WalkDir(emitted, ".", func(path string, d fs.DirEntry, err error) error {
+
 		if err != nil {
 			return err
 		}
@@ -130,6 +131,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Print("\n")
 
 	moduleName, err := gotools.EnterModuleName()
 	if err != nil {
