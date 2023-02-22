@@ -132,8 +132,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Print("\n")
-
 	moduleName, err := gotools.EnterModuleName()
 	if err != nil {
 		log.Fatal(err)
