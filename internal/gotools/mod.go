@@ -45,3 +45,12 @@ func ChangeModuleName(name string) error {
 	}
 	return nil
 }
+
+func GetAllDeps() error {
+	cmd := exec.Command("go", "get", "./...")
+	_, err := cmd.CombinedOutput()
+	if err != nil {
+		return err
+	}
+	return nil
+}

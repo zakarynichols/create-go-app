@@ -160,6 +160,14 @@ func main() {
 
 	fmt.Printf("\n")
 
+	fmt.Printf("%sFetching dependencies: %sgo get ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	err = gotools.GetAllDeps()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("\n")
+
 	_, err = gotools.FormatCode()
 	if err != nil {
 		fmt.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
