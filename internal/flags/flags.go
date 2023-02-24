@@ -14,7 +14,7 @@ type Flag struct {
 
 type Flags map[int]Flag
 
-func NewFlags(httpFlag, cliFlag bool) Flags {
+func New(httpFlag, cliFlag bool) Flags {
 	return Flags{
 		0: Flag{
 			flagType: HTTPkey,

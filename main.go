@@ -47,7 +47,7 @@ func main() {
 	flag.Parse()
 
 	// Flags come before positional arguments.
-	namedFlags := flags.NewFlags(*httpFlag, *cliFlag)
+	namedFlags := flags.New(*httpFlag, *cliFlag)
 
 	// Validate 'http' or 'cli' named argument.
 	flagType, err := namedFlags.Validate()
