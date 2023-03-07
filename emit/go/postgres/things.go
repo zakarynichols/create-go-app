@@ -24,7 +24,7 @@ func (ts thingService) CreateThing(t thing.Thing) error {
 
 func (ts thingService) GetThing(id string) (thing.Thing, error) {
 	var thing thing.Thing
-	err := ts.psql.db.QueryRow("SELECT * FROM things WHERE thing_id = $1", id).Scan(&thing.ID, &thing.Name, &thing.Description, &thing.Type)
+	err := ts.psql.db.QueryRow("SELECT * FROM things WHERE thing_id = $1", id).Scan(&thing.ID, &thing.Name, &thing.Description, &thing.CreatedAt, &thing.Type)
 	if err != nil {
 		return thing, fmt.Errorf("failed to retrieve thing: %s", err.Error())
 	}

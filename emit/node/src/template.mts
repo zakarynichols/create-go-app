@@ -14,57 +14,57 @@ export const indexHTML = `
   </head>
   <body>
     <div id="error"></div>
-    <form id="school-form">
+    <form id="thing-form">
       <div class="form-group">
-        <label for="schoolId">School ID</label>
-        <input type="text" id="schoolId" name="schoolId" required />
+        <label for="thingId">thing ID</label>
+        <input type="text" id="thingId" name="thingId" required />
       </div>
-      <button type="submit">Get School</button>
+      <button type="submit">Get thing</button>
     </form>
-    <div class="school-data">
+    <div class="thing-data">
       <div class="field">
-        <label>School ID:</label>
-        <span id="school-id"></span>
+        <label>thing ID:</label>
+        <span id="thing-id"></span>
       </div>
       <div class="field">
-        <label>School Name:</label>
-        <span id="school-name"></span>
+        <label>thing Name:</label>
+        <span id="thing-name"></span>
       </div>
       <div class="field">
         <label>Location:</label>
-        <span id="school-location"></span>
+        <span id="thing-location"></span>
       </div>
       <div class="field">
         <label>Type:</label>
-        <span id="school-type"></span>
+        <span id="thing-type"></span>
       </div>
     </div>
     <script>
-      const schoolFormEl = document.querySelector("#school-form");
-      const schoolIdInputEl = document.querySelector("#schoolId");
-      const schoolIdEl = document.querySelector("#school-id");
-      const schoolNameEl = document.querySelector("#school-name");
-      const schoolLocation = document.querySelector("#school-location");
-      const schoolTypeEl = document.querySelector("#school-type");
+      const thingFormEl = document.querySelector("#thing-form");
+      const thingIdInputEl = document.querySelector("#thingId");
+      const thingIdEl = document.querySelector("#thing-id");
+      const thingNameEl = document.querySelector("#thing-name");
+      const thingLocation = document.querySelector("#thing-location");
+      const thingTypeEl = document.querySelector("#thing-type");
       const errorEl = document.querySelector("#error");
 
-      schoolFormEl.addEventListener("submit", async (event) => {
+      thingFormEl.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const schoolId = schoolIdInputEl.value;
+        const thingId = thingIdInputEl.value;
         try {
-          const school = await getSchoolById(schoolId);
-          schoolIdEl.textContent = school.id;
-          schoolNameEl.textContent = school.name;
-          schoolLocation.textContent = school.location;
-          schoolTypeEl.textContent = school.type;
+          const thing = await getThingById(thingId);
+          thingIdEl.textContent = thing.id;
+          thingNameEl.textContent = thing.name;
+          thingLocation.textContent = thing.location;
+          thingTypeEl.textContent = thing.type;
         } catch (error) {
           console.error(error);
           errorEl.textContent = "failed";
         }
       });
 
-      async function getSchoolById(schoolId) {
-        const response = await fetch(\`${serverURL}/schools/\${schoolId}\`, {
+      async function getThingById(thingId) {
+        const response = await fetch(\`${serverURL}/things/\${thingId}\`, {
           method: "GET",
         });
         if (response.ok) {
@@ -74,7 +74,7 @@ export const indexHTML = `
           throw new Error("Invalid ID supplied");
         }
         if (response.status === 404) {
-          throw new Error("School not found");
+          throw new Error("thing not found");
         }
       }
     </script>
