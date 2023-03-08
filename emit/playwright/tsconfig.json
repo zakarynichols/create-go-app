@@ -1,4 +1,5 @@
 {
+  // TODO: Keep only necessary compiler options.
   "compilerOptions": {
     "lib": ["ES6", "DOM"],
     "strict": true,

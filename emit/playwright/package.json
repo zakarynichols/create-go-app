@@ -1,8 +1,7 @@
 {
   "name": "playwright",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "end-to-end testing suite",
   "scripts": {
     "test": "tsc && npx playwright test ./dist"
   },

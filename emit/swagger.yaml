@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Parent Teacher Portal
+  title: Thing API
   description: A description about the application.
   version: 0.0.1
 
@@ -9,18 +9,18 @@ servers:
     description: Example app for demonstration locally.
 
 paths:
-  /schools:
+  /things:
     post:
       tags:
-        - schools
-      summary: Add a new school
-      description: Add a new school
-      operationId: addSchool
+        - things
+      summary: Add a new thing
+      description: Add a new thing
+      operationId: addThing
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Schools"
+              $ref: "#/components/schemas/Things"
         required: true
       responses:
         "200":
@@ -28,23 +28,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Schools"
+                $ref: "#/components/schemas/Things"
         "400":
           description: Invalid ID supplied
         "404":
-          description: School not found
+          description: Thing not found
     put:
       tags:
-        - schools
-      summary: Update an existing school
-      description: Update an existing school by Id
-      operationId: updateSchool
+        - things
+      summary: Update an existing thing
+      description: Update an existing thing by Id
+      operationId: updateThing
       requestBody:
-        description: Update an existent school
+        description: Update an existent thing
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Schools"
+              $ref: "#/components/schemas/Thing"
         required: true
       responses:
         "200":
@@ -52,17 +52,17 @@ paths:
         "400":
           description: Invalid ID supplied
         "404":
-          description: School not found
-  /schools/{schoolId}:
+          description: Thing not found
+  /things/{thingId}:
     get:
       tags:
-        - schools
-      summary: Get a school
-      operationId: getSchoolById
+        - things
+      summary: Get a thing
+      operationId: getThingById
       parameters:
-        - name: schoolId
+        - name: thingId
           in: path
-          description: ID of school to return
+          description: ID of thing to return
           required: true
           schema:
             type: integer
@@ -73,23 +73,23 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Schools"
+                $ref: "#/components/schemas/Things"
             application/xml:
               schema:
-                $ref: "#/components/schemas/Schools"
+                $ref: "#/components/schemas/Things"
         "400":
           description: Invalid ID supplied
         "404":
-          description: School not found
+          description: Thing not found
     delete:
       tags:
-        - schools
-      summary: Delete a school
-      operationId: deleteSchoolById
+        - things
+      summary: Delete a thing
+      operationId: deleteThingById
       parameters:
-        - name: schoolId
+        - name: thingId
           in: path
-          description: ID of school to delete
+          description: ID of thing to delete
           required: true
           schema:
             type: integer
@@ -100,13 +100,13 @@ paths:
         "400":
           description: Invalid ID supplied
         "404":
-          description: School not found
+          description: Thing not found
 components:
   schemas:
-    Schools:
+    Things:
       required:
         - name
-        - location
+        - description
         - type
       type: object
       properties:
@@ -116,16 +116,16 @@ components:
           example: 99
         name:
           type: string
-          description: name of the school
-          example: University of XYZ
-        location:
+          description: name of the thing
+          example: A cell phone
+        description:
           type: string
-          description: location of the school
-          example: 162 Andover Street Sulphur, LA 70663
+          description: description of the thing
+          example: A piece of hardware capable of communication remotely
         type:
           type: string
-          description: type of school (public or private)
+          description: type of thing (abstract or concrete)
           enum:
-            - public
-            - private
-          example: private
+            - abstract
+            - concrete
+          example: concrete
