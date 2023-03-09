@@ -11,6 +11,7 @@ type Cors struct {
 }
 
 func New() *Cors {
+	// TODO: Improve cors defaults.
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
 		AllowedMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
@@ -19,8 +20,4 @@ func New() *Cors {
 	})
 
 	return &Cors{c}
-}
-
-func (c Cors) Handler(h http.Handler) http.Handler {
-	return c.Cors.Handler(h)
 }

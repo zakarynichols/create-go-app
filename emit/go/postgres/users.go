@@ -1,5 +1,6 @@
 package postgres
 
+// TODO: Probably remove this users package. Just need 'things' API for demonstration.
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`

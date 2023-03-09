@@ -31,8 +31,8 @@ func (ts thingService) GetThing(id string) (thing.Thing, error) {
 	return thing, nil
 }
 
-func (ss thingService) GetAllThings() ([]thing.Thing, error) {
-	rows, err := ss.psql.db.Query("SELECT * FROM things")
+func (ts thingService) GetAllThings() ([]thing.Thing, error) {
+	rows, err := ts.psql.db.Query("SELECT * FROM things")
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve things: %s", err.Error())
 	}
@@ -49,16 +49,16 @@ func (ss thingService) GetAllThings() ([]thing.Thing, error) {
 	return things, nil
 }
 
-func (ss thingService) UpdateThing(id string, thing thing.Thing) error {
-	_, err := ss.psql.db.Exec("UPDATE things SET name = $1, description = $2, type = $3 WHERE thing_id = $4", thing.Name, thing.Description, thing.Type, id)
+func (ts thingService) UpdateThing(id string, thing thing.Thing) error {
+	_, err := ts.psql.db.Exec("UPDATE things SET name = $1, description = $2, type = $3 WHERE thing_id = $4", thing.Name, thing.Description, thing.Type, id)
 	if err != nil {
 		return fmt.Errorf("failed to update thing: %s", err.Error())
 	}
 	return nil
 }
 
-func (ss thingService) DeleteThing(id string) error {
-	_, err := ss.psql.db.Exec("DELETE FROM things WHERE thing_id = $1", id)
+func (ts thingService) DeleteThing(id string) error {
+	_, err := ts.psql.db.Exec("DELETE FROM things WHERE thing_id = $1", id)
 	if err != nil {
 		return fmt.Errorf("failed to delete thing: %s", err.Error())
 	}

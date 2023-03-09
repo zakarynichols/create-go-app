@@ -17,7 +17,7 @@ func (s *Server) RegisterThingRoutes(ctx context.Context) {
 	s.router.Handle("/things/{id}", handleDeleteThing(ctx, s.thingService)).Methods("DELETE")
 }
 
-func handleCreateThing(ctx context.Context, ss thing.ThingService) http.HandlerFunc {
+func handleCreateThing(ctx context.Context, ts thing.ThingService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var thing thing.Thing
 
@@ -27,7 +27,7 @@ func handleCreateThing(ctx context.Context, ss thing.ThingService) http.HandlerF
 		}
 		defer r.Body.Close()
 
-		err := ss.CreateThing(thing)
+		err := ts.CreateThing(thing)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
