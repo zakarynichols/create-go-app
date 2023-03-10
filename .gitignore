@@ -1,4 +1,10 @@
+# Markdown files to reference during local development
 api-spec-notes.md
 notes.md
+
+# Ignore generated go files to prevent compile errors during local development
 emit/go/go.mod
 emit/go/go.sum
+
+# The generated app name to test during local development
+my-app
