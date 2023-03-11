@@ -12,9 +12,9 @@ import (
 	"strings"
 
 	"create-go-app.com/colors"
-	"create-go-app.com/internal/flags"
-	"create-go-app.com/internal/gotools"
-	"create-go-app.com/pkg/timer"
+	"create-go-app.com/flags"
+	"create-go-app.com/gotools"
+	"create-go-app.com/timer"
 )
 
 //go:embed all:emit
