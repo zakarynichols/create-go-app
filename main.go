@@ -52,7 +52,7 @@ func main() {
 	// Validate 'http' or 'cli' named argument.
 	flagType, err := namedFlags.Validate()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
+		colors.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
 		os.Exit(1)
 	}
 
@@ -64,7 +64,7 @@ func main() {
 
 	// Validate the non-named flags. There should only be one.
 	if len(posArgs) != 1 {
-		fmt.Printf("%s%v%s\n", colors.Red, ErrPosArgs, colors.Default)
+		colors.Printf("%s%v%s\n", colors.Red, ErrPosArgs, colors.Default)
 		os.Exit(1)
 	}
 
@@ -74,10 +74,10 @@ func main() {
 	// Get the working directory to show the user where the app is being created.
 	wkdir, err := os.Getwd()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, ErrWkdir, colors.Default)
+		colors.Printf("%s%v%s\n", colors.Red, ErrWkdir, colors.Default)
 		os.Exit(1)
 	}
-	fmt.Printf("Creating a new %sGo%s app in %s%s/%s\n%s", colors.Cyan, colors.Default, colors.Green, wkdir, app.dirname, colors.Default)
+	colors.Printf("Creating a new %sGo%s app in %s%s/%s\n%s", colors.Cyan, colors.Default, colors.Green, wkdir, app.dirname, colors.Default)
 
 	fmt.Printf("\n")
 
@@ -149,7 +149,7 @@ func main() {
 
 	err = os.Chdir(app.dirname + "/go")
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
+		colors.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
 		os.Exit(1)
 	}
 
@@ -160,7 +160,7 @@ func main() {
 
 	fmt.Printf("\n")
 
-	fmt.Printf("%sFetching dependencies: %sgo get ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	colors.Printf("%sFetching dependencies: %sgo get ./...%s\n", colors.White, colors.Cyan, colors.Default)
 	err = gotools.GetAllDeps()
 	if err != nil {
 		log.Fatal(err)
@@ -170,17 +170,17 @@ func main() {
 
 	_, err = gotools.FormatCode()
 	if err != nil {
-		fmt.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
+		colors.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
 		os.Exit(1)
 	}
-	fmt.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	colors.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
 
 	fmt.Printf("\n")
 
 	// Get the time it took for the program to complete.
 	elapsed := t.Elapsed()
 
-	fmt.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
+	colors.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
 }
 
 func usage() {

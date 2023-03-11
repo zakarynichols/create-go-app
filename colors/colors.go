@@ -1,20 +1,23 @@
 package colors
 
 import (
+	"fmt"
 	"os"
 	"strings"
 )
 
+type Color string
+
 var (
-	Reset   = "\033[0m"
-	Red     = "\033[31m"
-	Green   = "\033[32m"
-	Yellow  = "\033[33m"
-	Blue    = "\033[34m"
-	Purple  = "\033[35m"
-	Cyan    = "\033[36m"
-	White   = "\033[37m"
-	Default = "\033[39m"
+	Reset   Color = "\033[0m"
+	Red     Color = "\033[31m"
+	Green   Color = "\033[32m"
+	Yellow  Color = "\033[33m"
+	Blue    Color = "\033[34m"
+	Purple  Color = "\033[35m"
+	Cyan    Color = "\033[36m"
+	White   Color = "\033[37m"
+	Default Color = "\033[39m"
 )
 
 // CheckTerminal will check the TERM environment variable to determine the type of terminal being used
@@ -47,4 +50,14 @@ func CheckTerminal() {
 		White = ""
 		Default = ""
 	}
+}
+
+// Printf formats a colored string according to a format specifier. It's
+// an explicit definition for creating color formatted output strings.
+func Printf(format string, a ...any) error {
+	_, err := fmt.Printf(format, a...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
