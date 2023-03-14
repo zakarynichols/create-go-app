@@ -35,7 +35,7 @@ func main() {
 	colors.CheckTerminal()
 
 	// Start a timer.
-	t := timer.Start()
+	start := timer.Start()
 
 	// Allocate zero-value app.
 	app := new(App)
@@ -178,7 +178,7 @@ func main() {
 	fmt.Printf("\n")
 
 	// Get the time it took for the program to complete.
-	elapsed := t.Elapsed()
+	elapsed := start.Elapsed()
 
 	colors.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
 }
