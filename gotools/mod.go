@@ -8,13 +8,13 @@ import (
 	"strings"
 )
 
-func InitializeModule(module string) error {
+func InitializeModule(module string) ([]byte, error) {
 	cmd := exec.Command("go", "mod", "init", module)
-	_, err := cmd.CombinedOutput()
+	b, err := cmd.CombinedOutput()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return b, nil
 }
 
 func EnterModuleName() (string, error) {
@@ -29,10 +29,6 @@ func EnterModuleName() (string, error) {
 	if len(input) == 0 {
 		return "", err
 	}
-	// TODO: Restrict the length of the input?
-	// if len(input) > 100 {
-	// 	return "", err
-	// }
 
 	return input, nil
 }

@@ -153,7 +153,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = gotools.InitializeModule(moduleName)
+	_, err = gotools.InitializeModule(moduleName)
 	if err != nil {
 		log.Fatal(err)
 	}
