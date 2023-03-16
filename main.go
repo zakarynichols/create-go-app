@@ -22,9 +22,8 @@ var emitted embed.FS
 
 const BaseRepo = "github.com/username/repo"
 
-type App struct {
+type app struct {
 	dirname string
-	flag    string // http or cli
 }
 
 var httpFlag = flag.Bool("http", false, "Create an http server")
@@ -38,7 +37,7 @@ func main() {
 	start := timer.Start()
 
 	// Allocate zero-value app.
-	app := new(App)
+	app := new(app)
 
 	// Assign our own custom usage handler.
 	flag.Usage = usage
@@ -47,17 +46,14 @@ func main() {
 	flag.Parse()
 
 	// Flags come before positional arguments.
-	namedFlags := flags.New(*httpFlag, *cliFlag)
+	namedFlag := flags.New(*httpFlag, *cliFlag)
 
 	// Validate 'http' or 'cli' named argument.
-	flagType, err := namedFlags.Validate()
+	err := namedFlag.Validate()
 	if err != nil {
 		colors.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
 		os.Exit(1)
 	}
-
-	// Set the created app type.
-	app.flag = flagType
 
 	// Get all positional arguments passed to the program.
 	posArgs := flag.Args()

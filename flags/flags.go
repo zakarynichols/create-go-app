@@ -3,42 +3,29 @@ package flags
 import "fmt"
 
 const (
-	HTTPkey string = "http"
-	CLIkey  string = "cli"
+	HttpFlag int = 1
+	CliFlag  int = 0
 )
 
 type Flag struct {
-	flagType string // http or cli
-	isSet    bool   // true is flag set
+	Value int
 }
 
-type Flags map[int]Flag
-
-func New(httpFlag, cliFlag bool) Flags {
-	return Flags{
-		0: Flag{
-			flagType: HTTPkey,
-			isSet:    httpFlag,
-		},
-		1: Flag{
-			flagType: CLIkey,
-			isSet:    cliFlag,
-		},
+func New(httpFlag, cliFlag bool) *Flag {
+	if httpFlag {
+		return &Flag{Value: HttpFlag}
+	} else if cliFlag {
+		return &Flag{Value: CliFlag}
 	}
+	return nil
 }
 
-func (f Flags) Validate() (string, error) {
-	var count int
-	var flag string
-	for _, v := range f {
-		if v.isSet {
-			flag = v.flagType
-			count++
-		}
+func (f *Flag) Validate() error {
+	if f == nil {
+		return fmt.Errorf("at least one flag must be set")
 	}
-	if count != 1 {
-		return "", fmt.Errorf("validate: there can only be a single named flag")
+	if f.Value != HttpFlag && f.Value != CliFlag {
+		return fmt.Errorf("invalid flag value: %d", f.Value)
 	}
-
-	return flag, nil
+	return nil
 }
