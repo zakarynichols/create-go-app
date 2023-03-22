@@ -17,6 +17,8 @@ import (
 	"create-go-app.com/timer"
 )
 
+// TODO: Cleanup app if an error occurs by removing the newly created directory.
+
 //go:embed all:emit
 var emitted embed.FS
 
