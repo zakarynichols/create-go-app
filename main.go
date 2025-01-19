@@ -11,10 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"create-go-app.com/colors"
-	"create-go-app.com/flags"
-	"create-go-app.com/gotools"
-	"create-go-app.com/timer"
+	"create-go-app.dev/colors"
+	"create-go-app.dev/flags"
+	"create-go-app.dev/gotools"
+	"create-go-app.dev/timer"
 )
 
 // TODO: Cleanup app if an error occurs by removing the newly created directory.
@@ -22,7 +22,7 @@ import (
 //go:embed all:emit
 var emitted embed.FS
 
-const BaseRepo = "github.com/username/repo"
+const BaseRepo = "github.dev/username/repo"
 
 type app struct {
 	dirname string
@@ -184,7 +184,7 @@ func main() {
 func usage() {
 	fmt.Printf("  To create an http server with the name 'my-app' run:\n")
 	fmt.Printf("\n")
-	fmt.Printf("  go run create-go-app.com@latest -http my-app\n")
+	fmt.Printf("  go run create-go-app.dev@latest -http my-app\n")
 	fmt.Printf("\n")
 	fmt.Printf("  The last argument must be the name. e.g. 'my-app'\n")
 	fmt.Printf("\n")

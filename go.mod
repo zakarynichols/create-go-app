@@ -1,3 +1,3 @@
-module create-go-app.com
+module create-go-app.dev
 
 go 1.19
