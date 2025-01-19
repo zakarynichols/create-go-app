@@ -1,8 +1,10 @@
 # Create Go App
 
+_This project is still under development. Many features are not available and subject to change._
+
 [![Go Reference](https://pkg.go.dev/badge/create-go-app.com.svg)](https://pkg.go.dev/create-go-app.com)
 
-The goal of this project is to easily create a fully stack application with sane defaults and quick-start Go development.
+Create a production-ready, full-stack application, with sensible defaults.
 
 ## HTTP Server
 
