@@ -22,7 +22,7 @@ import (
 //go:embed all:emit
 var emitted embed.FS
 
-const BaseRepo = "github.dev/username/repo"
+const BaseRepo = "github.com/username/repo"
 
 type app struct {
 	dirname string
