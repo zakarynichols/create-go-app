@@ -15,3 +15,7 @@ Create a production-ready, full-stack application, with sensible defaults.
 _Creating a command line interface in one command is still under development._
 
 `$ go run create-go-app.com@latest -cli my-cli`
+
+## Development
+
+Make sure to `god mod init` and `go get` in `create-go-app/emit`. This will prevent compile time errors. Auto-generated `go.sum` and `go.mod` are ignored by source control.
