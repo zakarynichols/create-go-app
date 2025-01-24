@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"create-go-app.dev/colors"
-	"create-go-app.dev/flags"
 	"create-go-app.dev/gotools"
 	"create-go-app.dev/timer"
 )
 
+// TODO: Ensure there are no hard-coded path separaters. Use "path/filepath".
 // TODO: Cleanup app if an error occurs by removing the newly created directory.
 
 //go:embed all:emit
@@ -28,20 +28,16 @@ type app struct {
 	fullPath string
 }
 
-var httpFlag = flag.Bool("http", false, "Create an http server")
-var cliFlag = flag.Bool("cli", false, "Create a command line interface")
+var strFlag = flag.String("type", "http", "'http' or 'cli'")
 
 func main() {
 	a := new(app)
 	err := run(a)
 	if err != nil {
-		// fmt.Printf("\n")
-		// fmt.Print(err)
-		// fmt.Printf("\n")
 		err = cleanup(a.fullPath)
-		// if err != nil {
-		// 	fmt.Println(err.Error())
-		// }
+		if err != nil {
+			fmt.Printf("%v", err)
+		}
 	}
 }
 
@@ -59,22 +55,14 @@ func run(a *app) error {
 	flag.Parse()
 
 	// Flags come before non-flag arguments.
-	namedFlag := flags.New(*httpFlag, *cliFlag)
-
-	// Validate 'http' or 'cli' named argument.
-	err := namedFlag.Validate()
-	if err != nil {
-		colors.Printf("%s%v%s\n", colors.Red, ErrNamedFlag, colors.Default)
-		return err
-	}
+	fmt.Printf("%s\n", *strFlag)
 
 	// Get all non-flag arguments passed to the program.
 	nonFlagArgs := flag.Args()
 
 	// Validate the non-named flags. There should only be one.
 	if len(nonFlagArgs) != 1 {
-		colors.Printf("%s%v%s\n", colors.Red, ErrPosArgs, colors.Default)
-		return err
+		return colors.Printf("%s%v%s\n", colors.Red, ErrNonFlagArgs, colors.Default)
 	}
 
 	// Assign the last and only non-flag argument to the apps's root directory name.
@@ -92,8 +80,7 @@ func run(a *app) error {
 	a.fullPath = fullPath
 
 	if info, err := os.Stat(a.fullPath); err == nil && info.IsDir() {
-		return colors.Printf("%s Directory %s%s%s already exists%s\n", colors.Red, colors.Yellow, a.fullPath, colors.Red, colors.Default)
-		// return errors.New("generic error")
+		return colors.Printf("%sDirectory %s%s%s already exists%s\n", colors.Red, colors.Yellow, a.fullPath, colors.Red, colors.Default)
 	}
 
 	colors.Printf("Creating a new %sGo%s app in %s%s\n%s", colors.Cyan, colors.Default, colors.Green, fullPath, colors.Default)
@@ -167,7 +154,9 @@ func run(a *app) error {
 		return err
 	}
 
-	err = os.Chdir(a.appName + "/go")
+	p := filepath.Join(a.appName, "go")
+
+	err = os.Chdir(p)
 	if err != nil {
 		colors.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
 		return err
