@@ -1,8 +1,15 @@
-# Go - Compile and execute go server
-FROM golang:latest
+# TODO: Improve Dockerfile.
+
+FROM golang:1.23.5 AS build
+
 WORKDIR /server
 COPY . .
+
 RUN go mod download
-RUN go build -o main cmd/main.go
+RUN CGO_ENABLED=0 go build -o main cmd/main.go
+
+FROM gcr.io/distroless/static-debian12
+WORKDIR /server
+COPY --from=build /server/main .
 EXPOSE 3000
 ENTRYPOINT ["/server/main"]
