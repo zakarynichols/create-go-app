@@ -27,7 +27,7 @@ func EnterModuleName() (string, error) {
 
 	input = strings.TrimSpace(input)
 	if len(input) == 0 {
-		return "", err
+		return "", fmt.Errorf("create-go-app: you must provide an input")
 	}
 
 	return input, nil

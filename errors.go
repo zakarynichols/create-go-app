@@ -2,6 +2,7 @@ package main
 
 import "errors"
 
+// TODO: strike a balance between swallowing errors and showing our own vs simply returning the error that propogates.
 var (
 	ErrDirExists     = errors.New("create-go-app: directory already exists")
 	ErrMkdir         = errors.New("create-go-app: failed to create directory")
@@ -15,8 +16,8 @@ var (
 	ErrCreateDir     = errors.New("create-go-app: failed to create directory")
 	ErrLongModule    = errors.New("create-go-app: module name is too long")
 	ErrInvalidModule = errors.New("create-go-app: invalid module name")
-	ErrNamedFlag     = errors.New("create-go-app: invalid named flag parameters")
-	ErrPosArgs       = errors.New("create-go-app: invalid positional arguments")
+	ErrNamedFlag     = errors.New("create-go-app: invalid named flag arguments")
+	ErrNonFlagArgs   = errors.New("create-go-app: invalid non-flag arguments")
 	ErrCreateFile    = errors.New("create-go-app: failed to create file")
 	ErrNamedFlags    = errors.New("create-go-app: please provide only a single named flag")
 )
