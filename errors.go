@@ -4,9 +4,9 @@ import "errors"
 
 // TODO: strike a balance between swallowing errors and showing our own vs simply returning the error that propogates.
 var (
-	ErrDirExists     = errors.New("create-go-app: directory already exists")
-	ErrMkdir         = errors.New("create-go-app: failed to create directory")
-	ErrChdir         = errors.New("create-go-app: failed to change directory")
+	ErrDirExists = errors.New("create-go-app: directory already exists")
+	ErrMkdir     = errors.New("create-go-app: failed to create directory")
+	// ErrChdir         = errors.New("create-go-app: failed to change directory")
 	ErrWkdir         = errors.New("create-go-app: failed to get working directory")
 	ErrInitMod       = errors.New("create-go-app: failed to init a module")
 	ErrFmt           = errors.New("create-go-app: failed to format code")

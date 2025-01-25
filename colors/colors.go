@@ -2,6 +2,7 @@ package colors
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -54,10 +55,10 @@ func CheckTerminal() {
 
 // Printf formats a colored string according to a format specifier. It's
 // an explicit definition for creating color formatted output strings.
-func Printf(format string, a ...any) error {
+// This function is a required dependency and will Exit if Printf fails.
+func Printf(format string, a ...any) {
 	_, err := fmt.Printf(format, a...)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
-	return nil
 }

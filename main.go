@@ -2,10 +2,12 @@ package main
 
 import (
 	"embed"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,9 +36,18 @@ func main() {
 	a := new(app)
 	err := run(a)
 	if err != nil {
+		if a.fullPath == "" {
+			return
+		}
+		if errors.Is(ErrDirExists, err) {
+			// TODO: Prompt the option to overwrite?
+			colors.Printf("%s%s%s\n", colors.Yellow, fmt.Sprintf("create-go-app: directory '%s' already exists", a.fullPath), colors.Default)
+			return
+		}
+		colors.Printf("%s%s%s\n", colors.Red, err.Error(), colors.Default)
 		err = cleanup(a.fullPath)
 		if err != nil {
-			fmt.Printf("%v", err)
+			log.Fatalf("create-go-app: an unexpected error occurred: %v", err)
 		}
 	}
 }
@@ -55,14 +66,14 @@ func run(a *app) error {
 	flag.Parse()
 
 	// Flags come before non-flag arguments.
-	fmt.Printf("%s\n", *strFlag)
+	// fmt.Printf("flags: %s\n", *strFlag)
 
 	// Get all non-flag arguments passed to the program.
 	nonFlagArgs := flag.Args()
 
 	// Validate the non-named flags. There should only be one.
 	if len(nonFlagArgs) != 1 {
-		return colors.Printf("%s%v%s\n", colors.Red, ErrNonFlagArgs, colors.Default)
+		return ErrNonFlagArgs
 	}
 
 	// Assign the last and only non-flag argument to the apps's root directory name.
@@ -75,17 +86,13 @@ func run(a *app) error {
 		return err
 	}
 
-	fullPath := filepath.Join(wkdir, a.appName)
-
-	a.fullPath = fullPath
+	a.fullPath = filepath.Join(wkdir, a.appName)
 
 	if info, err := os.Stat(a.fullPath); err == nil && info.IsDir() {
-		return colors.Printf("%sDirectory %s%s%s already exists%s\n", colors.Red, colors.Yellow, a.fullPath, colors.Red, colors.Default)
+		return ErrDirExists
 	}
 
-	colors.Printf("Creating a new %sGo%s app in %s%s\n%s", colors.Cyan, colors.Default, colors.Green, fullPath, colors.Default)
-
-	fmt.Printf("\n")
+	colors.Printf("Creating a new %sGo%s app in %s%s\n%s", colors.Cyan, colors.Default, colors.Green, a.fullPath, colors.Default)
 
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
 	err = fs.WalkDir(emitted, ".", func(path string, d fs.DirEntry, err error) error {
@@ -158,7 +165,6 @@ func run(a *app) error {
 
 	err = os.Chdir(p)
 	if err != nil {
-		colors.Printf("%s%v%s\n", colors.Red, ErrChdir, colors.Default)
 		return err
 	}
 
@@ -167,15 +173,11 @@ func run(a *app) error {
 		return err
 	}
 
-	fmt.Printf("\n")
-
 	colors.Printf("%sFetching dependencies: %sgo get ./...%s\n", colors.White, colors.Cyan, colors.Default)
 	err = gotools.GetAllDeps()
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("\n")
 
 	_, err = gotools.FormatCode()
 	if err != nil {
@@ -183,8 +185,6 @@ func run(a *app) error {
 		return err
 	}
 	colors.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
-
-	fmt.Printf("\n")
 
 	// Get the time it took for the program to complete.
 	elapsed := start.Elapsed()
@@ -196,13 +196,9 @@ func run(a *app) error {
 
 func usage() {
 	fmt.Printf("  To create an http server with the name 'my-app' run:\n")
-	fmt.Printf("\n")
 	fmt.Printf("  go run create-go-app.dev@latest -http my-app\n")
-	fmt.Printf("\n")
 	fmt.Printf("  The last argument must be the name. e.g. 'my-app'\n")
-	fmt.Printf("\n")
 	fmt.Printf("  Available named flag arguments: cli or http\n")
-	fmt.Printf("\n")
 	flag.PrintDefaults()
 }
 
@@ -240,28 +236,18 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 func cleanup(path string) error {
 	var err error
 
-	fmt.Printf("\n")
-
-	colors.Printf("%sAn unexpected error occurred.%s\n", colors.Red, colors.Default)
-
-	fmt.Printf("\n")
-
 	colors.Printf("%sExecuting cleanup...%s\n", colors.Cyan, colors.Default)
-
-	fmt.Printf("\n")
 
 	_, err = os.Stat(path)
 	if err != nil {
-		fmt.Printf("No cleanup needed. Directory '%s' does not exist.\n", path)
-		return err
+		fmt.Printf("Skipping cleanup. Directory '%s' does not exist.\n", path)
+		return nil
 	}
 
 	colors.Printf("Attempting to delete directory %s%s%s (y/n): ", colors.Red, path, colors.Default)
 
 	var input string
 	fmt.Scan(&input)
-
-	fmt.Printf("\n")
 
 	if input == "y" {
 		err = os.RemoveAll(path)
@@ -271,22 +257,16 @@ func cleanup(path string) error {
 		}
 		colors.Printf("%sCleanup successful.%s Removed directory %s%s%s.\n", colors.Green, colors.Default, colors.Yellow, path, colors.Default)
 
-		fmt.Printf("\n")
-
 		return nil
 	}
 
 	if input == "n" {
 		fmt.Printf("Skipping deletion of directory '%s'\n", path)
 
-		fmt.Printf("\n")
-
 		return nil
 	}
 
 	fmt.Printf("Skipping deletion of directory '%s'\n", path)
-
-	fmt.Printf("\n")
 
 	return nil
 }
