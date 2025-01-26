@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 
@@ -34,20 +34,37 @@ var strFlag = flag.String("type", "http", "'http' or 'cli'")
 
 func main() {
 	a := new(app)
-	err := run(a)
-	if err != nil {
-		if a.fullPath == "" {
-			return
-		}
-		if errors.Is(ErrDirExists, err) {
-			// TODO: Prompt the option to overwrite?
-			colors.Printf("%s%s%s\n", colors.Yellow, fmt.Sprintf("create-go-app: directory '%s' already exists", a.fullPath), colors.Default)
-			return
-		}
-		colors.Printf("%s%s%s\n", colors.Red, err.Error(), colors.Default)
-		err = cleanup(a.fullPath)
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt)
+
+	done := make(chan error, 1)
+
+	// Run the app logic in a goroutine
+	go func() {
+		err := run(a)
+		done <- err
+	}()
+
+	// Wait for either an interrupt or the app logic to complete
+	select {
+	case <-sigChan:
+		fmt.Println("\nInterrupt received. Initiating cleanup...")
+		err := cleanup(a.fullPath)
 		if err != nil {
-			log.Fatalf("create-go-app: an unexpected error occurred: %v", err)
+			fmt.Println("Error during cleanup:", err)
+			os.Exit(1)
+		}
+		fmt.Println("Cleanup complete, exiting.")
+	case err := <-done:
+		if err != nil {
+			if errors.Is(ErrDirExists, err) {
+				fmt.Printf("create-go-app: directory '%s' already exists\n", a.fullPath)
+			} else {
+				fmt.Printf("fatal error: %s\n", err.Error())
+			}
+		} else {
+			fmt.Println("App logic completed successfully.")
 		}
 	}
 }
@@ -66,7 +83,7 @@ func run(a *app) error {
 	flag.Parse()
 
 	// Flags come before non-flag arguments.
-	// fmt.Printf("flags: %s\n", *strFlag)
+	fmt.Printf("flags: %s\n", *strFlag)
 
 	// Get all non-flag arguments passed to the program.
 	nonFlagArgs := flag.Args()
@@ -93,6 +110,11 @@ func run(a *app) error {
 	}
 
 	colors.Printf("Creating a new %sGo%s app in %s%s\n%s", colors.Cyan, colors.Default, colors.Green, a.fullPath, colors.Default)
+
+	moduleName, err := gotools.EnterModuleName()
+	if err != nil {
+		return err
+	}
 
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
 	err = fs.WalkDir(emitted, ".", func(path string, d fs.DirEntry, err error) error {
@@ -142,11 +164,6 @@ func run(a *app) error {
 		return nil
 	})
 
-	if err != nil {
-		return err
-	}
-
-	moduleName, err := gotools.EnterModuleName()
 	if err != nil {
 		return err
 	}
@@ -232,7 +249,6 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 	return nil
 }
 
-// TODO: Is this sufficient cleanup?
 func cleanup(path string) error {
 	var err error
 
@@ -241,7 +257,7 @@ func cleanup(path string) error {
 	_, err = os.Stat(path)
 	if err != nil {
 		fmt.Printf("Skipping cleanup. Directory '%s' does not exist.\n", path)
-		return nil
+		return err
 	}
 
 	colors.Printf("Attempting to delete directory %s%s%s (y/n): ", colors.Red, path, colors.Default)
