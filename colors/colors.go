@@ -59,6 +59,7 @@ func CheckTerminal() {
 func Printf(format string, a ...any) {
 	_, err := fmt.Printf(format, a...)
 	if err != nil {
-		log.Fatal(err)
+		fatalErr := fmt.Errorf("create-go-app/colors: printf failed")
+		log.Fatal(fatalErr, err)
 	}
 }
