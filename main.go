@@ -23,7 +23,7 @@ import (
 //go:embed all:emit
 var emitted embed.FS
 
-const BaseRepo = "github.com/username/repo"
+const exampleRepoURL = "github.com/username/repo"
 
 type app struct {
 	appName  string
@@ -35,24 +35,27 @@ var strFlag = flag.String("type", "http", "'http' or 'cli'")
 func main() {
 	a := new(app)
 
+	// This is to start cleanup when the user tries to exit. When prompted to
+	// enter the module name, if the user signals an interrupt, it doesn't
+	// stop execution the app will wait for the user to enter a newline '\n'.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
+	// Wait for the app to complete or the app will wait for an interrupt signal.
 	done := make(chan error, 1)
 
-	// Run the app logic in a goroutine
 	go func() {
 		err := run(a)
 		done <- err
 	}()
 
-	// Wait for either an interrupt or the app logic to complete
+	// Wait for either an interrupt or the app logic to complete.
 	select {
 	case <-sigChan:
 		fmt.Println("\nInterrupt received. Initiating cleanup...")
 		err := cleanup(a.fullPath)
 		if err != nil {
-			fmt.Println("Error during cleanup:", err)
+			fmt.Println("cleanup failed:", err)
 			os.Exit(1)
 		}
 		fmt.Println("Cleanup complete, exiting.")
@@ -60,8 +63,9 @@ func main() {
 		if err != nil {
 			if errors.Is(ErrDirExists, err) {
 				fmt.Printf("create-go-app: directory '%s' already exists\n", a.fullPath)
+				// TODO: Add (y/n) overwrite prompt.
 			} else {
-				fmt.Printf("fatal error: %s\n", err.Error())
+				fmt.Printf("fatal error: %v\n", err)
 			}
 		} else {
 			fmt.Println("App logic completed successfully.")
@@ -171,7 +175,7 @@ func run(a *app) error {
 	// Now that the directory is created from via fs.WalkDir, walk the newly created dir
 	// and update all import paths with the user's provided module string.
 	err = filepath.WalkDir(a.appName, func(path string, d fs.DirEntry, err error) error {
-		return changeGoImports(path, d, BaseRepo, moduleName)
+		return changeGoImports(path, d, exampleRepoURL, moduleName)
 	})
 
 	if err != nil {
@@ -243,7 +247,6 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 		if err != nil {
 			return err
 		}
-
 	}
 
 	return nil
