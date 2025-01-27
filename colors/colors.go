@@ -3,7 +3,6 @@ package colors
 import (
 	"fmt"
 	"log"
-	"os"
 	"strings"
 )
 
@@ -23,8 +22,7 @@ var (
 
 // CheckTerminal will check the TERM environment variable to determine the type of terminal being used
 // and adjust the ANSI codes accordingly
-func CheckTerminal() {
-	term := os.Getenv("TERM")
+func CheckTerminal(term string) {
 	if strings.Contains(term, "xterm") || strings.Contains(term, "rxvt") || strings.Contains(term, "linux") {
 		// ANSI codes will work as-is on these terminal types
 		return

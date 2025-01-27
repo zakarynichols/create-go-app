@@ -37,7 +37,7 @@ func main() {
 
 	// This is to start cleanup when the user tries to exit. When prompted to
 	// enter the module name, if the user signals an interrupt, it doesn't
-	// stop execution the app will wait for the user to enter a newline '\n'.
+	// stop execution. The app will wait for the user to enter a newline '\n'.
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
@@ -55,7 +55,7 @@ func main() {
 		fmt.Println("\nInterrupt received. Initiating cleanup...")
 		err := cleanup(a.fullPath)
 		if err != nil {
-			fmt.Println("cleanup failed:", err)
+			fmt.Println("cleanup failed: ", err)
 			os.Exit(1)
 		}
 		fmt.Println("Cleanup complete, exiting.")
@@ -74,8 +74,11 @@ func main() {
 }
 
 func run(a *app) error {
+	// Get other env vars here and pass as arguments.
+	term := os.Getenv("TERM")
+
 	// Make sure ANSI codes are supported by this terminal.
-	colors.CheckTerminal()
+	colors.CheckTerminal(term)
 
 	// Start a timer.
 	start := timer.Start()
@@ -122,50 +125,10 @@ func run(a *app) error {
 
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
 	err = fs.WalkDir(emitted, ".", func(path string, d fs.DirEntry, err error) error {
-
 		if err != nil {
 			return err
 		}
-
-		// Remove the 'emit' string from the path.
-		r := strings.Replace(path, "emit", "", -1)
-
-		// Join the new app's directory name to the new string.
-		dst := filepath.Join(a.appName, strings.TrimPrefix(r, a.appName))
-
-		// Create directories if they don't exist.
-		if d.IsDir() {
-			err := os.Mkdir(dst, os.FileMode(0777))
-			if os.IsExist(err) {
-				return nil
-			} else {
-				return err
-			}
-		}
-
-		f, err := emitted.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		b, err := io.ReadAll(f)
-		if err != nil {
-			return err
-		}
-
-		dstFile, err := os.Create(dst)
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
-
-		err = os.WriteFile(dst, b, os.FileMode(0777))
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return writeEmit(a.appName, path, d)
 	})
 
 	if err != nil {
@@ -175,6 +138,9 @@ func run(a *app) error {
 	// Now that the directory is created from via fs.WalkDir, walk the newly created dir
 	// and update all import paths with the user's provided module string.
 	err = filepath.WalkDir(a.appName, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
 		return changeGoImports(path, d, exampleRepoURL, moduleName)
 	})
 
@@ -223,13 +189,18 @@ func usage() {
 	flag.PrintDefaults()
 }
 
+type FileDescriptor interface {
+	Name() string
+	IsDir() bool
+}
+
 // Change go import paths in all files.
-func changeGoImports(path string, d fs.DirEntry, prev string, new string) error {
-	if d.IsDir() {
+func changeGoImports(path string, fd FileDescriptor, prev string, new string) error {
+	if fd.IsDir() {
 		return nil
 	}
 
-	matched, err := filepath.Match("*.go", d.Name())
+	matched, err := filepath.Match("*.go", fd.Name())
 
 	if err != nil {
 		return err
@@ -247,6 +218,52 @@ func changeGoImports(path string, d fs.DirEntry, prev string, new string) error 
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+type IsDirectory interface {
+	IsDir() bool
+}
+
+func writeEmit(appName string, path string, d IsDirectory) error {
+	// Remove the 'emit' string from the path.
+	r := strings.Replace(path, "emit", "", -1)
+
+	// Join the new app's directory name to the new string.
+	dst := filepath.Join(appName, strings.TrimPrefix(r, appName))
+
+	// Create directories if they don't exist.
+	if d.IsDir() {
+		err := os.Mkdir(dst, os.FileMode(0777))
+		if os.IsExist(err) {
+			return nil
+		} else {
+			return err
+		}
+	}
+
+	f, err := emitted.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return err
+	}
+
+	dstFile, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	err = os.WriteFile(dst, b, os.FileMode(0777))
+	if err != nil {
+		return err
 	}
 
 	return nil
