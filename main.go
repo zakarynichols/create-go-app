@@ -53,7 +53,7 @@ func main() {
 	select {
 	case <-sigChan:
 		fmt.Println("\nInterrupt received. Initiating cleanup...")
-		err := cleanup(a.fullPath)
+		err := clean(a.fullPath)
 		if err != nil {
 			fmt.Println("cleanup failed: ", err)
 			os.Exit(1)
@@ -189,6 +189,7 @@ func usage() {
 	flag.PrintDefaults()
 }
 
+// TODO: better names
 type FileDescriptor interface {
 	Name() string
 	IsDir() bool
@@ -223,6 +224,7 @@ func changeGoImports(path string, fd FileDescriptor, prev string, new string) er
 	return nil
 }
 
+// TODO: better names
 type IsDirectory interface {
 	IsDir() bool
 }
@@ -269,7 +271,7 @@ func writeEmit(appName string, path string, d IsDirectory) error {
 	return nil
 }
 
-func cleanup(path string) error {
+func clean(path string) error {
 	var err error
 
 	colors.Printf("%sExecuting cleanup...%s\n", colors.Cyan, colors.Default)
