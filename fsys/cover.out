@@ -1,0 +1,24 @@
+mode: set
+create-go-app.dev/fsys/files.go:22.92,30.11 3 1
+create-go-app.dev/fsys/files.go:30.11,32.22 2 1
+create-go-app.dev/fsys/files.go:32.22,34.4 1 1
+create-go-app.dev/fsys/files.go:34.9,36.4 1 1
+create-go-app.dev/fsys/files.go:39.2,40.16 2 1
+create-go-app.dev/fsys/files.go:40.16,42.3 1 1
+create-go-app.dev/fsys/files.go:43.2,46.16 3 1
+create-go-app.dev/fsys/files.go:46.16,48.3 1 1
+create-go-app.dev/fsys/files.go:50.2,51.16 2 1
+create-go-app.dev/fsys/files.go:51.16,53.3 1 1
+create-go-app.dev/fsys/files.go:54.2,57.16 3 1
+create-go-app.dev/fsys/files.go:57.16,59.3 1 1
+create-go-app.dev/fsys/files.go:61.2,61.12 1 1
+create-go-app.dev/fsys/files.go:76.122,77.16 1 1
+create-go-app.dev/fsys/files.go:77.16,79.3 1 1
+create-go-app.dev/fsys/files.go:81.2,83.16 2 1
+create-go-app.dev/fsys/files.go:83.16,85.3 1 0
+create-go-app.dev/fsys/files.go:87.2,87.13 1 1
+create-go-app.dev/fsys/files.go:87.13,89.17 2 1
+create-go-app.dev/fsys/files.go:89.17,91.4 1 1
+create-go-app.dev/fsys/files.go:93.3,97.17 3 1
+create-go-app.dev/fsys/files.go:97.17,99.4 1 1
+create-go-app.dev/fsys/files.go:102.2,102.12 1 1
