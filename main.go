@@ -10,30 +10,87 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"strings"
 
 	"create-go-app.dev/colors"
+	"create-go-app.dev/fsys"
 	"create-go-app.dev/gotools"
 	"create-go-app.dev/timer"
 )
 
+// 'create-go-app/embed'
+const EMBED_PATH = "embed"
+
 // TODO: Ensure there are no hard-coded path separaters. Use "path/filepath".
 // TODO: Cleanup app if an error occurs by removing the newly created directory.
 
-//go:embed all:emit
-var emitted embed.FS
+//go:embed all:embed
+var emb embed.FS
 
 const exampleRepoURL = "github.com/username/repo"
 
 type app struct {
 	appName  string
 	fullPath string
+	embed    embedded
+}
+
+type embedded struct {
+	fs embed.FS
+}
+
+func (e embedded) Open(name string) (fsys.FileReaderCloser, error) {
+	file, err := e.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+type fileService struct{}
+
+func (f fileService) Create(name string) (*os.File, error) {
+	return os.Create(name)
+}
+
+func (f fileService) WriteFile(name string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(name, data, perm)
+}
+
+func (f fileService) ReadAll(r io.Reader) ([]byte, error) {
+	return io.ReadAll(r)
+}
+
+func (f fileService) Mkdir(name string, perm os.FileMode) error {
+	return os.Mkdir(name, perm)
+}
+
+type fileReaderWriter struct{}
+
+func (f fileReaderWriter) ReadFile(name string) ([]byte, error) {
+	return os.ReadFile(name)
+}
+
+func (f fileReaderWriter) WriteFile(name string, data []byte, perm os.FileMode) error {
+	return os.WriteFile(name, data, perm)
 }
 
 var strFlag = flag.String("type", "http", "'http' or 'cli'")
 
+func NewEmbedded(e embed.FS) embedded {
+	return embedded{e}
+}
+
+func NewApp(embed embed.FS) app {
+	e := NewEmbedded(embed)
+	return app{embed: e}
+}
+
 func main() {
-	a := new(app)
+	// Inject embed path.
+	fsys.EmbedPath = EMBED_PATH
+
+	a := NewApp(emb)
 
 	// This is to start cleanup when the user tries to exit. When prompted to
 	// enter the module name, if the user signals an interrupt, it doesn't
@@ -45,7 +102,7 @@ func main() {
 	done := make(chan error, 1)
 
 	go func() {
-		err := run(a)
+		err := run(&a)
 		done <- err
 	}()
 
@@ -123,12 +180,15 @@ func run(a *app) error {
 		return err
 	}
 
+	e := embedded{fs: emb}
+
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
-	err = fs.WalkDir(emitted, ".", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(e.fs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		return writeEmit(a.appName, path, d)
+		ops := fileService{}
+		return fsys.Output(a.appName, path, d.IsDir(), e, ops)
 	})
 
 	if err != nil {
@@ -141,7 +201,8 @@ func run(a *app) error {
 		if err != nil {
 			return err
 		}
-		return changeGoImports(path, d, exampleRepoURL, moduleName)
+		ops := fileReaderWriter{}
+		return fsys.ReplaceImports("*.go", path, exampleRepoURL, moduleName, d, ops)
 	})
 
 	if err != nil {
@@ -187,88 +248,6 @@ func usage() {
 	fmt.Printf("  The last argument must be the name. e.g. 'my-app'\n")
 	fmt.Printf("  Available named flag arguments: cli or http\n")
 	flag.PrintDefaults()
-}
-
-// TODO: better names
-type FileDescriptor interface {
-	Name() string
-	IsDir() bool
-}
-
-// Change go import paths in all files.
-func changeGoImports(path string, fd FileDescriptor, prev string, new string) error {
-	if fd.IsDir() {
-		return nil
-	}
-
-	matched, err := filepath.Match("*.go", fd.Name())
-
-	if err != nil {
-		return err
-	}
-
-	if matched {
-		read, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		newContents := strings.Replace(string(read), prev, new, -1)
-
-		err = os.WriteFile(path, []byte(newContents), 0)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// TODO: better names
-type IsDirectory interface {
-	IsDir() bool
-}
-
-func writeEmit(appName string, path string, d IsDirectory) error {
-	// Remove the 'emit' string from the path.
-	r := strings.Replace(path, "emit", "", -1)
-
-	// Join the new app's directory name to the new string.
-	dst := filepath.Join(appName, strings.TrimPrefix(r, appName))
-
-	// Create directories if they don't exist.
-	if d.IsDir() {
-		err := os.Mkdir(dst, os.FileMode(0777))
-		if os.IsExist(err) {
-			return nil
-		} else {
-			return err
-		}
-	}
-
-	f, err := emitted.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return err
-	}
-
-	dstFile, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	err = os.WriteFile(dst, b, os.FileMode(0777))
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func clean(path string) error {
