@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-//go:embed all:test
+//go:embed all:_embed_test_
 var mockEmbed embed.FS
 
 type MockFileOps struct {
@@ -59,7 +59,6 @@ func (w mockFSWrapper) Open(name string) (FileReaderCloser, error) {
 	return file, nil
 }
 
-// TODO: Make tests idempotent by adding setup and teardown logic per test.
 func TestWriteEmit(t *testing.T) {
 	tests := []struct {
 		appName string
@@ -78,8 +77,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "ReadAll error",
-			appName: "test",
-			path:    "test",
+			appName: "_embed_test_",
+			path:    "_embed_test_",
 			fileOps: MockFileOps{
 				ReadAllErr: errors.New("mock ReadAll error"),
 			},
@@ -87,8 +86,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "Create error",
-			appName: "test",
-			path:    "test/root.txt",
+			appName: "_embed_test_",
+			path:    "_embed_test_/root.txt",
 			fileOps: MockFileOps{
 				CreateErr: errors.New("mock Create error"),
 			},
@@ -96,8 +95,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "WriteFile error",
-			appName: "test",
-			path:    "test/root.txt",
+			appName: "_embed_test_",
+			path:    "_embed_test_/root.txt",
 			fileOps: MockFileOps{
 				WriteFileErr: errors.New("mock WriteFile error"),
 			},
@@ -105,8 +104,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "Mkdir error",
-			appName: "test",
-			path:    "test",
+			appName: "_embed_test_",
+			path:    "_embed_test_",
 			fileOps: MockFileOps{
 				MkdirErr: errors.New("mock Mkdir error"),
 			},
@@ -115,8 +114,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "isExists error",
-			appName: "test",
-			path:    "test",
+			appName: "_embed_test_",
+			path:    "_embed_test_",
 			fileOps: MockFileOps{
 				MkdirErr: os.ErrExist,
 			},
@@ -125,8 +124,8 @@ func TestWriteEmit(t *testing.T) {
 		},
 		{
 			title:   "Success",
-			appName: "test",
-			path:    "test/root.txt",
+			appName: "_embed_test_",
+			path:    "_embed_test_/root.txt",
 			fileOps: MockFileOps{},
 			wantErr: false,
 			isDir:   false,

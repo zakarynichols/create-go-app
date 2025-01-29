@@ -26,7 +26,7 @@ type opener interface {
 }
 
 func Output(name string, path string, isDir bool, o opener, fs fileService) error {
-	// Remove the 'emit' string from the path.
+	// Remove the 'embed' string from the path.
 	r := strings.Replace(path, EmbedPath, "", -1)
 
 	// Join the new app's directory name to the new string.
@@ -67,7 +67,6 @@ func Output(name string, path string, isDir bool, o opener, fs fileService) erro
 	return nil
 }
 
-// TODO: better names
 type FileDescriptor interface {
 	Name() string
 	IsDir() bool
