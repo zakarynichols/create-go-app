@@ -15,6 +15,9 @@ import (
 	"create-go-app.dev/fsys"
 	"create-go-app.dev/gotools"
 	"create-go-app.dev/timer"
+
+	"github.com/fatih/color"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 // 'create-go-app/embed'
@@ -84,6 +87,23 @@ func NewApp(embed embed.FS) app {
 }
 
 func main() {
+	// Create SprintXxx functions to mix strings with other non-colorized strings:
+	yellow := color.New(color.FgYellow).SprintFunc()
+	red := color.New(color.FgRed).SprintFunc()
+	fmt.Printf("This is a %s and this is %s.\n", yellow("warning"), red("error"))
+
+	info := color.New(color.FgWhite, color.BgGreen).SprintFunc()
+	fmt.Printf("This %s rocks!\n", info("package"))
+
+	// Use helper functions
+	fmt.Println("This", color.RedString("warning"), "should be not neglected.")
+	fmt.Printf("%v %v\n", color.GreenString("Info:"), "an important message.")
+
+	// Windows supported too! Just don't forget to change the output to color.Output
+	fmt.Fprintf(color.Output, "Windows support: %s", color.GreenString("PASS"))
+
+	return
+
 	// Inject embed path.
 	fsys.EmbedPath = EMBED_PATH
 
@@ -119,7 +139,8 @@ func main() {
 				fmt.Printf("create-go-app: directory '%s' already exists\n", a.fullPath)
 				// TODO: Add (y/n) overwrite prompt.
 			} else {
-				fmt.Printf("fatal error: %v\n", err)
+				fmt.Printf("%v\n", err)
+				// TODO: Call cleanup when done testing failed output.
 			}
 		} else {
 			fmt.Println("App logic completed successfully.")
@@ -128,6 +149,8 @@ func main() {
 }
 
 func run(a *app) error {
+	env := os.Getenv("CREATE_GO_APP_ENV")
+	fmt.Printf("CREATE_GO_APP_ENV: %s\n", env)
 	// Get other env vars here and pass as arguments.
 	term := os.Getenv("TERM")
 
@@ -207,6 +230,15 @@ func run(a *app) error {
 	}
 
 	p := filepath.Join(a.appName, "go")
+
+	_, err = os.Stat(p)
+
+	if errors.Is(err, fs.ErrNotExist) {
+
+		if env == "development" {
+			return errors.Join(err, fmt.Errorf("create-go-app: did you remove embed/go/go.mod before running the app"))
+		}
+	}
 
 	err = os.Chdir(p)
 	if err != nil {
