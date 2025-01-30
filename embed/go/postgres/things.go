@@ -6,6 +6,8 @@ import (
 	thing "github.com/username/repo"
 )
 
+// TODO: Generate services with user provided input instead of "thing".
+
 type thingService struct {
 	psql *psqlService
 }

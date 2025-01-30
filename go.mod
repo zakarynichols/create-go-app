@@ -1,3 +1,3 @@
 module create-go-app.dev
 
-go 1.19
+go 1.23.5

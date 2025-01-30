@@ -9,6 +9,8 @@ import (
 	thing "github.com/username/repo"
 )
 
+// TODO: Generate services with user provided input instead of "thing".
+
 func (s *Server) RegisterThingRoutes(ctx context.Context) {
 	s.router.Handle("/things", handleCreateThing(ctx, s.thingService)).Methods("POST")
 	s.router.Handle("/things/{id}", handleGetThing(ctx, s.thingService)).Methods("GET")

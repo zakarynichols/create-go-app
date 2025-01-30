@@ -2,6 +2,8 @@ package thing
 
 import "time"
 
+// TODO: Generate services with user provided input instead of "thing".
+
 type Thing struct {
 	ID          int       `json:"id"`
 	Name        string    `json:"name"`

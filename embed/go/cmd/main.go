@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -35,11 +34,10 @@ func main() {
 
 	// Redis
 	redis := redis.Open()
-	pong, err := redis.Ping(ctx).Result()
+	_, err = redis.Ping(ctx).Result()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(pong)
 
 	port := os.Getenv("GO_PORT")
 

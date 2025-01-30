@@ -20,9 +20,6 @@ import (
 // 'create-go-app/embed'
 const EMBED_PATH = "embed"
 
-// TODO: Ensure there are no hard-coded path separaters. Use "path/filepath".
-// TODO: Cleanup app if an error occurs by removing the newly created directory.
-
 //go:embed all:embed
 var emb embed.FS
 
