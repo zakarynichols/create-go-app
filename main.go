@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"path/filepath"
 
-	"create-go-app.dev/colors"
+	DEPRECATED_colors "create-go-app.dev/colors"
 	"create-go-app.dev/fsys"
 	"create-go-app.dev/gotools"
 	"create-go-app.dev/timer"
@@ -87,23 +87,6 @@ func NewApp(embed embed.FS) app {
 }
 
 func main() {
-	// Create SprintXxx functions to mix strings with other non-colorized strings:
-	yellow := color.New(color.FgYellow).SprintFunc()
-	red := color.New(color.FgRed).SprintFunc()
-	fmt.Printf("This is a %s and this is %s.\n", yellow("warning"), red("error"))
-
-	info := color.New(color.FgWhite, color.BgGreen).SprintFunc()
-	fmt.Printf("This %s rocks!\n", info("package"))
-
-	// Use helper functions
-	fmt.Println("This", color.RedString("warning"), "should be not neglected.")
-	fmt.Printf("%v %v\n", color.GreenString("Info:"), "an important message.")
-
-	// Windows supported too! Just don't forget to change the output to color.Output
-	fmt.Fprintf(color.Output, "Windows support: %s", color.GreenString("PASS"))
-
-	return
-
 	// Inject embed path.
 	fsys.EmbedPath = EMBED_PATH
 
@@ -151,11 +134,6 @@ func main() {
 func run(a *app) error {
 	env := os.Getenv("CREATE_GO_APP_ENV")
 	fmt.Printf("CREATE_GO_APP_ENV: %s\n", env)
-	// Get other env vars here and pass as arguments.
-	term := os.Getenv("TERM")
-
-	// Make sure ANSI codes are supported by this terminal.
-	colors.CheckTerminal(term)
 
 	// Start a timer.
 	start := timer.Start()
@@ -183,7 +161,6 @@ func run(a *app) error {
 	// Get the working directory to show the user where the app is being created.
 	wkdir, err := os.Getwd()
 	if err != nil {
-		colors.Printf("%s%v%s\n", colors.Red, ErrWkdir, colors.Default)
 		return err
 	}
 
@@ -193,7 +170,7 @@ func run(a *app) error {
 		return ErrDirExists
 	}
 
-	colors.Printf("Creating a new %sGo%s app in %s%s\n%s", colors.Cyan, colors.Default, colors.Green, a.fullPath, colors.Default)
+	fmt.Fprintf(color.Output, "Creating a new %s app in %s\n", color.CyanString("Go"), a.fullPath)
 
 	moduleName, err := gotools.EnterModuleName()
 	if err != nil {
@@ -250,7 +227,7 @@ func run(a *app) error {
 		return err
 	}
 
-	colors.Printf("%sFetching dependencies: %sgo get ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	DEPRECATED_colors.Printf("%sFetching dependencies: %sgo get ./...%s\n", DEPRECATED_colors.White, DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
 	err = gotools.GetAllDeps()
 	if err != nil {
 		return err
@@ -258,15 +235,15 @@ func run(a *app) error {
 
 	_, err = gotools.FormatCode()
 	if err != nil {
-		colors.Printf("%s%v%s\n", colors.Red, ErrFmt, colors.Default)
+		DEPRECATED_colors.Printf("%s%v%s\n", DEPRECATED_colors.Red, ErrFmt, DEPRECATED_colors.Default)
 		return err
 	}
-	colors.Printf("%sFormatting code: %sgo fmt ./...%s\n", colors.White, colors.Cyan, colors.Default)
+	DEPRECATED_colors.Printf("%sFormatting code: %sgo fmt ./...%s\n", DEPRECATED_colors.White, DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
 
 	// Get the time it took for the program to complete.
 	elapsed := start.Elapsed()
 
-	colors.Printf("%sSucceeded in %f seconds\n%s", colors.Green, elapsed.Seconds(), colors.Default)
+	DEPRECATED_colors.Printf("%sSucceeded in %f seconds\n%s", DEPRECATED_colors.Green, elapsed.Seconds(), DEPRECATED_colors.Default)
 
 	return nil
 }
@@ -282,7 +259,7 @@ func usage() {
 func clean(path string) error {
 	var err error
 
-	colors.Printf("%sExecuting cleanup...%s\n", colors.Cyan, colors.Default)
+	DEPRECATED_colors.Printf("%sExecuting cleanup...%s\n", DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
 
 	_, err = os.Stat(path)
 	if err != nil {
@@ -290,7 +267,7 @@ func clean(path string) error {
 		return err
 	}
 
-	colors.Printf("Attempting to delete directory %s%s%s (y/n): ", colors.Red, path, colors.Default)
+	DEPRECATED_colors.Printf("Attempting to delete directory %s%s%s (y/n): ", DEPRECATED_colors.Red, path, DEPRECATED_colors.Default)
 
 	var input string
 	fmt.Scan(&input)
@@ -301,7 +278,7 @@ func clean(path string) error {
 			fmt.Printf("Failed to cleanup directory '%s'\n", path)
 			return err
 		}
-		colors.Printf("%sCleanup successful.%s Removed directory %s%s%s.\n", colors.Green, colors.Default, colors.Yellow, path, colors.Default)
+		DEPRECATED_colors.Printf("%sCleanup successful.%s Removed directory %s%s%s.\n", DEPRECATED_colors.Green, DEPRECATED_colors.Default, DEPRECATED_colors.Yellow, path, DEPRECATED_colors.Default)
 
 		return nil
 	}
