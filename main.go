@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 
-	DEPRECATED_colors "create-go-app.dev/colors"
 	"create-go-app.dev/fsys"
 	"create-go-app.dev/gotools"
 	"create-go-app.dev/timer"
@@ -87,6 +87,8 @@ func NewApp(embed embed.FS) app {
 }
 
 func main() {
+	color.NoColor = false
+
 	// Inject embed path.
 	fsys.EmbedPath = EMBED_PATH
 
@@ -120,10 +122,12 @@ func main() {
 		if err != nil {
 			if errors.Is(ErrDirExists, err) {
 				fmt.Printf("create-go-app: directory '%s' already exists\n", a.fullPath)
-				// TODO: Add (y/n) overwrite prompt.
-			} else {
-				fmt.Printf("%v\n", err)
-				// TODO: Call cleanup when done testing failed output.
+				return
+			}
+			fmt.Printf("%v\n", err)
+			err := clean(a.fullPath)
+			if err != nil {
+				log.Fatal(err)
 			}
 		} else {
 			fmt.Println("App logic completed successfully.")
@@ -133,7 +137,6 @@ func main() {
 
 func run(a *app) error {
 	env := os.Getenv("CREATE_GO_APP_ENV")
-	fmt.Printf("CREATE_GO_APP_ENV: %s\n", env)
 
 	// Start a timer.
 	start := timer.Start()
@@ -145,7 +148,7 @@ func run(a *app) error {
 	flag.Parse()
 
 	// Flags come before non-flag arguments.
-	fmt.Printf("flags: %s\n", *strFlag)
+	// fmt.Printf("flags: %s\n", *strFlag)
 
 	// Get all non-flag arguments passed to the program.
 	nonFlagArgs := flag.Args()
@@ -170,7 +173,7 @@ func run(a *app) error {
 		return ErrDirExists
 	}
 
-	fmt.Fprintf(color.Output, "Creating a new %s app in %s\n", color.CyanString("Go"), a.fullPath)
+	fmt.Fprintf(color.Output, "Creating a new %s app in %s\n", color.CyanString("Go"), color.YellowString(a.fullPath))
 
 	moduleName, err := gotools.EnterModuleName()
 	if err != nil {
@@ -211,10 +214,10 @@ func run(a *app) error {
 	_, err = os.Stat(p)
 
 	if errors.Is(err, fs.ErrNotExist) {
-
 		if env == "development" {
 			return errors.Join(err, fmt.Errorf("create-go-app: did you remove embed/go/go.mod before running the app"))
 		}
+		return err
 	}
 
 	err = os.Chdir(p)
@@ -227,7 +230,8 @@ func run(a *app) error {
 		return err
 	}
 
-	DEPRECATED_colors.Printf("%sFetching dependencies: %sgo get ./...%s\n", DEPRECATED_colors.White, DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
+	fmt.Fprintf(color.Output, "%s %s\n", color.WhiteString("Fetching dependencies:"), color.CyanString("go get ./..."))
+
 	err = gotools.GetAllDeps()
 	if err != nil {
 		return err
@@ -235,15 +239,15 @@ func run(a *app) error {
 
 	_, err = gotools.FormatCode()
 	if err != nil {
-		DEPRECATED_colors.Printf("%s%v%s\n", DEPRECATED_colors.Red, ErrFmt, DEPRECATED_colors.Default)
 		return err
 	}
-	DEPRECATED_colors.Printf("%sFormatting code: %sgo fmt ./...%s\n", DEPRECATED_colors.White, DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
+
+	fmt.Fprintf(color.Output, "%s: %s\n", color.WhiteString("Formatting code"), color.CyanString("go fmt ./..."))
 
 	// Get the time it took for the program to complete.
 	elapsed := start.Elapsed()
 
-	DEPRECATED_colors.Printf("%sSucceeded in %f seconds\n%s", DEPRECATED_colors.Green, elapsed.Seconds(), DEPRECATED_colors.Default)
+	fmt.Fprintf(color.Output, "%s\n", color.GreenString(fmt.Sprintf("Succeeded in %f seconds", elapsed.Seconds())))
 
 	return nil
 }
@@ -259,37 +263,15 @@ func usage() {
 func clean(path string) error {
 	var err error
 
-	DEPRECATED_colors.Printf("%sExecuting cleanup...%s\n", DEPRECATED_colors.Cyan, DEPRECATED_colors.Default)
-
 	_, err = os.Stat(path)
 	if err != nil {
-		fmt.Printf("Skipping cleanup. Directory '%s' does not exist.\n", path)
 		return err
 	}
 
-	DEPRECATED_colors.Printf("Attempting to delete directory %s%s%s (y/n): ", DEPRECATED_colors.Red, path, DEPRECATED_colors.Default)
-
-	var input string
-	fmt.Scan(&input)
-
-	if input == "y" {
-		err = os.RemoveAll(path)
-		if err != nil {
-			fmt.Printf("Failed to cleanup directory '%s'\n", path)
-			return err
-		}
-		DEPRECATED_colors.Printf("%sCleanup successful.%s Removed directory %s%s%s.\n", DEPRECATED_colors.Green, DEPRECATED_colors.Default, DEPRECATED_colors.Yellow, path, DEPRECATED_colors.Default)
-
-		return nil
+	err = os.RemoveAll(path)
+	if err != nil {
+		return err
 	}
-
-	if input == "n" {
-		fmt.Printf("Skipping deletion of directory '%s'\n", path)
-
-		return nil
-	}
-
-	fmt.Printf("Skipping deletion of directory '%s'\n", path)
 
 	return nil
 }
