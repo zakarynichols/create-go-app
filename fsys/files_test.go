@@ -8,9 +8,6 @@ import (
 	"testing"
 )
 
-//go:embed all:_embed_test_
-var mockEmbed embed.FS
-
 type MockFileOps struct {
 	ReadAllErr   error
 	CreateErr    error
@@ -59,7 +56,12 @@ func (w mockFSWrapper) Open(name string) (FileReaderCloser, error) {
 	return file, nil
 }
 
+//go:embed all:_embed_test_
+var mockEmbed embed.FS
+
 func TestWriteEmit(t *testing.T) {
+	mockEmbedded := mockFSWrapper{fs: mockEmbed}
+
 	tests := []struct {
 		appName string
 		path    string
@@ -134,7 +136,7 @@ func TestWriteEmit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.title, func(t *testing.T) {
-			err := Output(tt.appName, tt.path, tt.isDir, mockFSWrapper{fs: mockEmbed}, tt.fileOps)
+			err := Output(tt.appName, tt.path, tt.isDir, mockEmbedded, tt.fileOps)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("got = %v, want = %v", err, tt.wantErr)
 			}
