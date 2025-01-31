@@ -18,6 +18,18 @@ _Creating a command line interface in one command is still under development._
 
 ## Development
 
+Bash scripts are provided for convenience. Use the scripts to create a deterministic 'my-app' directory. This prevents generating several different output directories that can't be tracked by `.gitignore`.
+
+__Create directory 'my-app'__
+```
+$ ./run.sh
+```
+
+__Cleanup directory 'my-app'__
+```
+$ ./clean.sh
+```
+
 Make sure to `god mod init` and `go get` in `create-go-app/emit`. This will prevent compile time errors. Auto-generated `go.sum` and `go.mod` are ignored by source control.
 
 ## Testing
