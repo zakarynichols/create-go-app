@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -127,7 +126,8 @@ func main() {
 			fmt.Printf("%v\n", err)
 			err := clean(a.fullPath)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Printf("%v\n", err)
+				return
 			}
 		} else {
 			fmt.Println("App logic completed successfully.")
@@ -244,7 +244,6 @@ func run(a *app) error {
 
 	fmt.Fprintf(color.Output, "%s: %s\n", color.WhiteString("Formatting code"), color.CyanString("go fmt ./..."))
 
-	// Get the time it took for the program to complete.
 	elapsed := start.Elapsed()
 
 	fmt.Fprintf(color.Output, "%s\n", color.GreenString(fmt.Sprintf("Succeeded in %f seconds", elapsed.Seconds())))
@@ -261,9 +260,7 @@ func usage() {
 }
 
 func clean(path string) error {
-	var err error
-
-	_, err = os.Stat(path)
+	_, err := os.Stat(path)
 	if err != nil {
 		return err
 	}

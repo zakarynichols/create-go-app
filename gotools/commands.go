@@ -8,6 +8,15 @@ import (
 	"strings"
 )
 
+func FormatCode() ([]byte, error) {
+	cmd := exec.Command("go", "fmt", "./...")
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
 func InitializeModule(module string) ([]byte, error) {
 	cmd := exec.Command("go", "mod", "init", module)
 	b, err := cmd.CombinedOutput()
@@ -27,7 +36,7 @@ func EnterModuleName() (string, error) {
 
 	input = strings.TrimSpace(input)
 	if len(input) == 0 {
-		return "", fmt.Errorf("create-go-app: you must provide a module name")
+		return "", fmt.Errorf("create-go-app: please provide a module name")
 	}
 
 	return input, nil
