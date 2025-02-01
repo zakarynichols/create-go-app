@@ -25,6 +25,8 @@ const EMBED_PATH = "embed"
 //go:embed all:embed
 var emb embed.FS
 
+var ErrDirExists = errors.New("create-go-app: directory already exists")
+
 const exampleRepoURL = "github.com/username/repo"
 
 type app struct {
@@ -155,7 +157,7 @@ func run(a *app) error {
 
 	// Validate the non-named flags. There should only be one.
 	if len(nonFlagArgs) != 1 {
-		return ErrNonFlagArgs
+		return fmt.Errorf("create-go-app: invalid non-flag arguments")
 	}
 
 	// Assign the last and only non-flag argument to the apps's root directory name.
@@ -180,15 +182,13 @@ func run(a *app) error {
 		return err
 	}
 
-	e := embedded{fs: emb}
-
 	// Walk the whole 'emit' directory and dynamically create the directories and files.
-	err = fs.WalkDir(e.fs, ".", func(path string, d fs.DirEntry, err error) error {
+	err = fs.WalkDir(a.embed.fs, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		ops := fileService{}
-		return fsys.Output(a.appName, path, d.IsDir(), e, ops)
+		return fsys.Output(a.appName, path, d.IsDir(), a.embed, ops)
 	})
 
 	if err != nil {
