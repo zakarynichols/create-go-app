@@ -33,6 +33,7 @@ type app struct {
 	appName  string
 	fullPath string
 	embed    embedded
+	timer    timer.Timer
 }
 
 type embedded struct {
@@ -78,13 +79,11 @@ func (f fileReaderWriter) WriteFile(name string, data []byte, perm os.FileMode) 
 
 var strFlag = flag.String("type", "http", "'http' or 'cli'")
 
-func NewEmbedded(e embed.FS) embedded {
-	return embedded{e}
-}
-
-func NewApp(embed embed.FS) app {
-	e := NewEmbedded(embed)
-	return app{embed: e}
+func NewApp(embed embed.FS, timer timer.Timer) app {
+	return app{
+		embed: embedded{embed},
+		timer: timer,
+	}
 }
 
 func main() {
@@ -93,7 +92,9 @@ func main() {
 	// Inject embed path.
 	fsys.EmbedPath = EMBED_PATH
 
-	a := NewApp(emb)
+	start := timer.Start()
+
+	a := NewApp(emb, *start)
 
 	// This is to start cleanup when the user tries to exit. When prompted to
 	// enter the module name, if the user signals an interrupt, it doesn't
@@ -139,9 +140,6 @@ func main() {
 
 func run(a *app) error {
 	env := os.Getenv("CREATE_GO_APP_ENV")
-
-	// Start a timer.
-	start := timer.Start()
 
 	// Assign our own custom usage handler.
 	flag.Usage = usage
@@ -244,7 +242,7 @@ func run(a *app) error {
 
 	fmt.Fprintf(color.Output, "%s: %s\n", color.WhiteString("Formatting code"), color.CyanString("go fmt ./..."))
 
-	elapsed := start.Elapsed()
+	elapsed := a.timer.Elapsed()
 
 	fmt.Fprintf(color.Output, "%s\n", color.GreenString(fmt.Sprintf("Succeeded in %f seconds", elapsed.Seconds())))
 
