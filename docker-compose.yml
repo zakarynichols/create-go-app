@@ -1,0 +1,14 @@
+services:
+  go-dev:
+    build: .
+    container_name: container-name-1
+    hostname: hostname-1
+    user: devuser
+    volumes:
+      - type: bind
+        source: ./app
+        target: /app
+    ports:
+      - "8080:8080"  # Expose port 8080 if needed
+    environment:
+      - TERM=xterm-256color
