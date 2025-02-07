@@ -7,7 +7,10 @@ services:
     volumes:
       - type: bind
         source: ./app
-        target: /app
+        target: /app    
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
     ports:
       - "8080:8080"  # Expose port 8080 if needed
     environment:
