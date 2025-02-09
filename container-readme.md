@@ -56,4 +56,6 @@ When adding a second user account I ran into several issues with docker.
 
 1. Add second user to `docker-users` group. Windows key -> Computer Management -> Local Users and Groups -> docker-users -> Add ...
 
-2. Set docker container mode to linux to work in WSL2. Docker icon in system tray -> right click -> Windows/linux mode 
+2. Set docker container mode to linux to work in WSL2. Docker icon in system tray -> right click -> Windows/linux mode
+
+3. Only one user account can have the docker daemon running. The other user account will run into errors when trying to use docker.
