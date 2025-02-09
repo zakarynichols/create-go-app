@@ -13,7 +13,9 @@ RUN chmod +x /usr/local/bin/docker-compose
 
 # Create a non-root user and switch to it
 RUN useradd -m devuser
-USER devuser
+USER devuser	
 
 # Expose port (optional, for web servers)
 EXPOSE 8080
+
+
