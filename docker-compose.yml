@@ -12,6 +12,6 @@ services:
         source: /var/run/docker.sock
         target: /var/run/docker.sock
     ports:
-      - "8080:8080"  # Expose port 8080 if needed
+      - "8080:8080"
     environment:
       - TERM=xterm-256color
